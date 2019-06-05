@@ -1,4 +1,4 @@
-# Smart Football Table - Detection
+# Smart Football Table - Cognition
 
 [![Build Status](https://travis-ci.org/smart-football-table/smart-football-table-cognition.svg?branch=master)](https://travis-ci.org/smart-football-table/smart-football-table-cognition)
 [![BCH compliance](https://bettercodehub.com/edge/badge/smart-football-table/smart-football-table-cognition?branch=master)](https://bettercodehub.com/)
