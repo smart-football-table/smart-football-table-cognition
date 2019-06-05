@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.smart-football-table</groupId>
-	<artifactId>detection</artifactId>
+	<artifactId>cognition</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
@@ -64,17 +64,19 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.1.2</version>
+				<groupId>com.google.cloud.tools</groupId>
+				<artifactId>jib-maven-plugin</artifactId>
+				<version>1.0.2</version>
 				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>detection.main.Main</mainClass>
-							<addClasspath>true</addClasspath>
-							<classpathPrefix>lib/</classpathPrefix>
-						</manifest>
-					</archive>
+					<container>
+						<mainClass>detection.main.Main</mainClass>
+						<useCurrentTimestamp>true</useCurrentTimestamp>
+					</container>
+					<to>
+						<tags>
+							<tag>${project.version}</tag>
+						</tags>
+					</to>
 				</configuration>
 			</plugin>
 			<plugin>
