@@ -3,25 +3,22 @@ package com.github.smartfootballtable.cognition.main;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.create;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
 import static com.github.smartfootballtable.cognition.main.EnvVars.envVarsAndArgs;
-import static java.util.Collections.addAll;
+import static java.util.stream.Stream.generate;
 import static org.kohsuke.args4j.OptionHandlerFilter.ALL;
 import static org.kohsuke.args4j.ParserProperties.defaults;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import com.github.smartfootballtable.cognition.SFTDetection;
+import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
@@ -31,9 +28,6 @@ import com.github.smartfootballtable.cognition.mqtt.MqttConsumer;
 import com.github.smartfootballtable.cognition.queue.QueueConsumer;
 
 public class Main {
-
-	private String pythonModule = "/home/nonroot/darknet/darknet_video.py";
-//	private String pythonModule = "src/main/resources/python-files/ballDetectorClassicOpenCV.py";
 
 	@Option(name = "-h", help = true)
 	boolean help;
@@ -78,10 +72,33 @@ public class Main {
 
 	void doMain(String... args) throws IOException {
 		MqttConsumer mqtt = mqtt(mqttHost, mqttPort);
-		SFTDetection detection = new SFTDetection(new Table(tableWidth, tableHeight, tableUnit),
+		SFTCognition cognition = new SFTCognition(new Table(tableWidth, tableHeight, tableUnit),
 				new QueueConsumer<Message>(mqtt, 300)).receiver(mqtt)
 						.withGoalConfig(new GoalDetector.Config().frontOfGoalPercentage(40));
-		detection.process(process(pythonModule, args).map(fromPythonFormat()));
+		// TODO write test
+		BlockingQueue<Message> queue = new ArrayBlockingQueue<>(10);
+		mqtt.addConsumer(t -> {
+			if (t.getTopic().startsWith("ball/position/rel")) {
+				queue.offer(t);
+			}
+		});
+		cognition.process(streamOf(queue));
+	}
+
+	private Stream<RelativePosition> streamOf(BlockingQueue<Message> queue) {
+		return generate(() -> {
+			try {
+				return parse(queue.take());
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+
+	private RelativePosition parse(Message message) {
+		String[] coords = message.getPayload().split("\\,");
+		return RelativePosition.create(System.currentTimeMillis(), Double.parseDouble(coords[0]),
+				Double.parseDouble(coords[1]));
 	}
 
 	private void printHelp(CmdLineParser parser) {
@@ -90,20 +107,6 @@ public class Main {
 		parser.printUsage(System.err);
 		System.err.println();
 		System.err.println("  Example: java " + mainClassName + parser.printExample(ALL));
-	}
-
-	protected static Stream<String> process(String module, String... args) throws IOException {
-		return input(new ProcessBuilder(args(module, args)).start().getInputStream());
-	}
-
-	private static List<String> args(String module, String... args) {
-		List<String> result = new ArrayList<>(Arrays.asList("python", "-u", module));
-		addAll(result, args);
-		return result;
-	}
-
-	private static Stream<String> input(InputStream is) {
-		return new BufferedReader(new InputStreamReader(is)).lines();
 	}
 
 	private MqttConsumer mqtt(String host, int port) throws IOException {

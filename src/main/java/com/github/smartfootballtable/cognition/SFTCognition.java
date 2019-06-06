@@ -14,14 +14,14 @@ import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.detector.GoalDetector;
 
-public class SFTDetection {
+public class SFTCognition {
 
 	private final Table table;
 	private Game game;
 	private Messages messages;
 	private volatile boolean reset;
 
-	public SFTDetection(Table table, Consumer<Message> consumer) {
+	public SFTCognition(Table table, Consumer<Message> consumer) {
 		this.table = table;
 		this.messages = new Messages(consumer, table.getDistanceUnit());
 		this.game = Game.newGame( //
@@ -33,12 +33,12 @@ public class SFTDetection {
 		).addScoreTracker(scoreTracker(messages, consumer));
 	}
 
-	public SFTDetection messages(Messages messages) {
+	public SFTCognition messages(Messages messages) {
 		this.messages = messages;
 		return this;
 	}
 
-	public SFTDetection receiver(MessageProvider provider) {
+	public SFTCognition receiver(MessageProvider provider) {
 		provider.addConsumer(m -> {
 			if (messages.isReset(m)) {
 				resetGame();
@@ -68,7 +68,7 @@ public class SFTDetection {
 		};
 	}
 
-	public SFTDetection withGoalConfig(GoalDetector.Config goalConfig) {
+	public SFTCognition withGoalConfig(GoalDetector.Config goalConfig) {
 		this.game = game.withGoalConfig(goalConfig);
 		return this;
 	}

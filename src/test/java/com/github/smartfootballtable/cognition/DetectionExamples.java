@@ -59,7 +59,7 @@ import java.util.stream.Stream;
 
 import org.hamcrest.Matcher;
 
-import com.github.smartfootballtable.cognition.SFTDetection;
+import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
@@ -273,7 +273,7 @@ class DetectionExamples {
 
 	private Stream<Message> process(List<RelativePosition> positions, Table table) {
 		List<Message> messages = new ArrayList<>();
-		new SFTDetection(table, messages::add).process(positions.stream());
+		new SFTCognition(table, messages::add).process(positions.stream());
 		return messages.stream();
 	}
 

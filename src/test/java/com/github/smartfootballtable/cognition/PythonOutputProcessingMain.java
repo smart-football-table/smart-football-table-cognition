@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.function.Consumer;
 
-import com.github.smartfootballtable.cognition.SFTDetection;
+import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.detector.GoalDetector;
@@ -27,7 +27,7 @@ public class PythonOutputProcessingMain {
 
 		try (BufferedReader reader = new BufferedReader(
 				new InputStreamReader(new FileInputStream(new File("python_output_opencv.txt"))))) {
-			new SFTDetection(new Table(120, 68, CENTIMETER), sysout)
+			new SFTCognition(new Table(120, 68, CENTIMETER), sysout)
 					.withGoalConfig(new GoalDetector.Config().frontOfGoalPercentage(40))
 					.process(reader.lines().map(Main.fromPythonFormat()));
 		}

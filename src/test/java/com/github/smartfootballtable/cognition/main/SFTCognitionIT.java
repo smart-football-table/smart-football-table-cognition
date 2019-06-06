@@ -37,7 +37,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.github.smartfootballtable.cognition.SFTDetection;
+import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
@@ -47,7 +47,7 @@ import com.github.smartfootballtable.cognition.mqtt.MqttConsumer;
 import io.moquette.server.Server;
 import io.moquette.server.config.MemoryConfig;
 
-class SFTDetectionIT {
+class SFTCognitionIT {
 
 	private static Duration timeout = ofSeconds(30);
 
@@ -58,7 +58,7 @@ class SFTDetectionIT {
 	private IMqttClient secondClient;
 	private List<Message> messagesReceived = new CopyOnWriteArrayList<>();
 
-	private SFTDetection sut;
+	private SFTCognition sut;
 
 	private MqttConsumer mqttConsumer;
 
@@ -68,7 +68,7 @@ class SFTDetectionIT {
 		broker = newMqttServer(LOCALHOST, brokerPort);
 		secondClient = newMqttClient(LOCALHOST, brokerPort, "client2");
 		mqttConsumer = new MqttConsumer(LOCALHOST, brokerPort);
-		sut = new SFTDetection(new Table(120, 68, CENTIMETER), mqttConsumer) //
+		sut = new SFTCognition(new Table(120, 68, CENTIMETER), mqttConsumer) //
 				.receiver(mqttConsumer) //
 				.withGoalConfig(new GoalDetector.Config().frontOfGoalPercentage(40));
 

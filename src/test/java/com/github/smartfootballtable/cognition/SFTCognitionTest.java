@@ -1,13 +1,13 @@
 package com.github.smartfootballtable.cognition;
 
-import static com.github.smartfootballtable.cognition.SFTDetectionTest.StdInBuilder.ball;
-import static com.github.smartfootballtable.cognition.SFTDetectionTest.StdInBuilder.BallPosBuilder.frontOfLeftGoal;
-import static com.github.smartfootballtable.cognition.SFTDetectionTest.StdInBuilder.BallPosBuilder.frontOfRightGoal;
-import static com.github.smartfootballtable.cognition.SFTDetectionTest.StdInBuilder.BallPosBuilder.kickoff;
-import static com.github.smartfootballtable.cognition.SFTDetectionTest.StdInBuilder.BallPosBuilder.lowerRightCorner;
-import static com.github.smartfootballtable.cognition.SFTDetectionTest.StdInBuilder.BallPosBuilder.offTable;
-import static com.github.smartfootballtable.cognition.SFTDetectionTest.StdInBuilder.BallPosBuilder.pos;
-import static com.github.smartfootballtable.cognition.SFTDetectionTest.StdInBuilder.BallPosBuilder.upperLeftCorner;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.ball;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.frontOfLeftGoal;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.frontOfRightGoal;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.kickoff;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.lowerRightCorner;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.offTable;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.pos;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.upperLeftCorner;
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.INCH;
@@ -39,8 +39,8 @@ import java.util.stream.Stream;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
-import com.github.smartfootballtable.cognition.SFTDetection;
-import com.github.smartfootballtable.cognition.SFTDetectionTest.StdInBuilder.BallPosBuilder;
+import com.github.smartfootballtable.cognition.SFTCognition;
+import com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
@@ -49,7 +49,7 @@ import com.github.smartfootballtable.cognition.detector.GoalDetector;
 import com.github.smartfootballtable.cognition.parser.LineParser;
 import com.github.smartfootballtable.cognition.parser.RelativeValueParser;
 
-class SFTDetectionTest {
+class SFTCognitionTest {
 
 	public static class StdInBuilder {
 
@@ -228,7 +228,7 @@ class SFTDetectionTest {
 	private Consumer<RelativePosition> inProgressConsumer = p -> {
 	};
 
-	private SFTDetection sut;
+	private SFTCognition sut;
 	private String inputString = "";
 
 	@Test
@@ -635,7 +635,7 @@ class SFTDetectionTest {
 	}
 
 	private void givenATableOfSize(double width, double height, DistanceUnit distanceUnit) {
-		this.sut = new SFTDetection(new Table(width, height, distanceUnit), messageCollector);
+		this.sut = new SFTCognition(new Table(width, height, distanceUnit), messageCollector);
 	}
 
 	private void givenATableOfAnySize() {
