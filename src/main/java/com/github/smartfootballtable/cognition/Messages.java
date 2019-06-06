@@ -13,9 +13,18 @@ import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Movement;
 import com.github.smartfootballtable.cognition.data.position.AbsolutePosition;
 import com.github.smartfootballtable.cognition.data.position.Position;
+import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.data.unit.DistanceUnit;
 
 public class Messages {
+
+	private static final String GAME_START = "game/start";
+	private static final String GAME_GAMEOVER = "game/gameover";
+	private static final String GAME_IDLE = "game/idle";
+	private static final String GAME_RESET = "game/reset";
+
+	private static final String BALL_POSITION_REL = "ball/position/rel";
+	private static final String BALL_POSITION_ABS = "ball/position/abs";
 
 	private final Consumer<Message> consumer;
 	private final DistanceUnit distanceUnit;
@@ -26,12 +35,12 @@ public class Messages {
 	}
 
 	public void gameStart() {
-		publish(message("game/start", ""));
+		publish(message(GAME_START, ""));
 	}
 
 	public void pos(AbsolutePosition pos) {
-		publish(message("ball/position/abs", posPayload(pos)));
-		publish(message("ball/position/rel", posPayload(pos.getRelativePosition())));
+		publish(message(BALL_POSITION_ABS, posPayload(pos)));
+		publish(message(BALL_POSITION_REL, posPayload(pos.getRelativePosition())));
 	}
 
 	private String posPayload(Position pos) {
@@ -48,7 +57,17 @@ public class Messages {
 	public void teamScored(int teamid, int score) {
 		publish(message("team/scored", teamid));
 		publish(message("team/score/" + teamid, score));
-		publish(message("game/score/" + teamid, score)); // deprecated
+		gameScore(teamid, score);
+	}
+
+	/**
+	 * Will be removed in future versions
+	 * 
+	 * @deprecated replaces by team/score/$id
+	 */
+	@Deprecated
+	private void gameScore(int teamid, int score) {
+		publish(message("game/score/" + teamid, score));
 	}
 
 	public void foul() {
@@ -56,15 +75,15 @@ public class Messages {
 	}
 
 	public void gameWon(int teamid) {
-		publish(message("game/gameover", teamid));
+		publish(message(GAME_GAMEOVER, teamid));
 	}
 
 	public void gameDraw(int[] teamids) {
-		publish(message("game/gameover", IntStream.of(teamids).mapToObj(String::valueOf).collect(joining(","))));
+		publish(message(GAME_GAMEOVER, IntStream.of(teamids).mapToObj(String::valueOf).collect(joining(","))));
 	}
 
 	public void idle(boolean b) {
-		publish(message("game/idle", Boolean.toString(b)));
+		publish(message(GAME_IDLE, Boolean.toString(b)));
 	}
 
 	private void publish(Message message) {
@@ -72,7 +91,31 @@ public class Messages {
 	}
 
 	public boolean isReset(Message message) {
-		return message.getTopic().equals("game/reset");
+		return message.getTopic().equals(GAME_RESET);
+	}
+
+	public boolean isRelativePosition(Message message) {
+		return message.getTopic().equals(BALL_POSITION_REL);
+	}
+
+	public RelativePosition parsePosition(String payload) {
+		String[] coords = payload.split("\\,");
+		if (coords.length == 2) {
+			Double x = toDouble(coords[0]);
+			Double y = toDouble(coords[1]);
+			if (x != null && y != null) {
+				return RelativePosition.create(System.currentTimeMillis(), x, y);
+			}
+		}
+		return null;
+	}
+
+	private static Double toDouble(String val) {
+		try {
+			return Double.valueOf(val);
+		} catch (NumberFormatException e) {
+			return null;
+		}
 	}
 
 }

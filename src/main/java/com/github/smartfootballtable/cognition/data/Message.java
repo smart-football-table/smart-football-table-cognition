@@ -9,7 +9,7 @@ public class Message {
 	private final String topic;
 	private final String payload;
 
-	private Message(String topic, Object payload) {
+	protected Message(String topic, Object payload) {
 		this.topic = topic;
 		this.payload = payload == null ? null : String.valueOf(payload);
 	}

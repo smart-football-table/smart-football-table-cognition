@@ -7,6 +7,7 @@ import static com.github.smartfootballtable.cognition.detector.MovementDetector.
 import static com.github.smartfootballtable.cognition.detector.PositionDetector.onPositionChange;
 
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.github.smartfootballtable.cognition.data.Message;
@@ -33,9 +34,8 @@ public class SFTCognition {
 		).addScoreTracker(scoreTracker(messages, consumer));
 	}
 
-	public SFTCognition messages(Messages messages) {
-		this.messages = messages;
-		return this;
+	public Messages messages() {
+		return messages;
 	}
 
 	public SFTCognition receiver(MessageProvider provider) {
@@ -74,18 +74,26 @@ public class SFTCognition {
 	}
 
 	public void process(Stream<RelativePosition> positions) {
-		positions.forEach(pos -> {
-			if (pos == null) {
-				// TOOO log invalid line
-			} else {
-				if (reset) {
-					game = game.reset();
-					messages.gameStart();
-					reset = false;
-				}
-				game = game.update(table.toAbsolute(pos));
+		positions.forEach(this::process);
+	}
+
+	public void process(Supplier<RelativePosition> positions) {
+		while (true) {
+			process(positions.get());
+		}
+	}
+
+	private void process(RelativePosition pos) {
+		if (pos == null) {
+			// TOOO log invalid line
+		} else {
+			if (reset) {
+				game = game.reset();
+				messages.gameStart();
+				reset = false;
 			}
-		});
+			game = game.update(table.toAbsolute(pos));
+		}
 	}
 
 	public void resetGame() {

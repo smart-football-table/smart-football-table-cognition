@@ -22,11 +22,8 @@ import static java.util.stream.IntStream.range;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
@@ -39,15 +36,13 @@ import java.util.stream.Stream;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
-import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder;
+import com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.TimestampedMessage;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.data.unit.DistanceUnit;
 import com.github.smartfootballtable.cognition.detector.GoalDetector;
-import com.github.smartfootballtable.cognition.parser.LineParser;
-import com.github.smartfootballtable.cognition.parser.RelativeValueParser;
 
 class SFTCognitionTest {
 
@@ -122,8 +117,20 @@ class SFTCognitionTest {
 
 		}
 
+		class TimestampedMessage {
+
+			private final long timestamp;
+			private final Message message;
+
+			public TimestampedMessage(long timestamp, Message message) {
+				this.timestamp = timestamp;
+				this.message = message;
+			}
+
+		}
+
 		private long timestamp;
-		private final List<String> lines = new ArrayList<>();
+		private final List<TimestampedMessage> messages = new ArrayList<>();
 
 		private StdInBuilder(long timestamp) {
 			this.timestamp = timestamp;
@@ -154,7 +161,7 @@ class SFTCognitionTest {
 		}
 
 		private StdInBuilder at(BallPosBuilder ballPosBuilder) {
-			lines.add(line(timestamp, ballPosBuilder.x, ballPosBuilder.y));
+			messages.add(makeMessage(ballPosBuilder.x, ballPosBuilder.y));
 			return this;
 		}
 
@@ -168,12 +175,12 @@ class SFTCognitionTest {
 		}
 
 		private StdInBuilder invalidData() {
-			lines.add(line(timestamp, "A", "B"));
+			messages.add(makeMessage("A", "B"));
 			return this;
 		}
 
-		private String line(Object... objects) {
-			return Arrays.stream(objects).map(String::valueOf).collect(joining(","));
+		private TimestampedMessage makeMessage(Object x, Object y) {
+			return new TimestampedMessage(timestamp, message("ball/position/rel", x + "," + y));
 		}
 
 		private StdInBuilder prepareForLeftGoal() {
@@ -216,8 +223,8 @@ class SFTCognitionTest {
 			return this;
 		}
 
-		private String[] build() {
-			return lines.toArray(new String[lines.size()]);
+		private List<TimestampedMessage> build() {
+			return new ArrayList<>(messages);
 		}
 
 	}
@@ -229,7 +236,7 @@ class SFTCognitionTest {
 	};
 
 	private SFTCognition sut;
-	private String inputString = "";
+	private final List<TimestampedMessage> inputMessages = new ArrayList<>();
 
 	@Test
 	void relativeValuesGetsConvertedToAbsolutesAtKickoff() throws IOException {
@@ -642,12 +649,12 @@ class SFTCognitionTest {
 		givenATableOfSize(123, 45, CENTIMETER);
 	}
 
-	private void givenInputToProcessIs(String... messages) {
-		inputString = inputString.concat(Arrays.stream(messages).collect(joining("\n")));
-	}
-
 	private void givenInputToProcessIs(StdInBuilder builder) {
 		givenInputToProcessIs(builder.build());
+	}
+
+	private void givenInputToProcessIs(List<TimestampedMessage> messages) {
+		inputMessages.addAll(messages);
 	}
 
 	private void givenFrontOfGoalPercentage(int frontOfGoalPercentage) {
@@ -660,9 +667,12 @@ class SFTCognitionTest {
 
 	void whenInputWasProcessed() throws IOException {
 		sut = sut.withGoalConfig(goalDetectorConfig);
-		LineParser parser = new RelativeValueParser();
-		sut.process(
-				new BufferedReader(new StringReader(inputString)).lines().map(parser::parse).peek(inProgressConsumer));
+		sut.process(inputMessages.stream().map(this::toPosition).peek(inProgressConsumer));
+	}
+
+	private RelativePosition toPosition(TimestampedMessage m) {
+		RelativePosition delegate = sut.messages().parsePosition(m.message.getPayload());
+		return delegate == null ? null : RelativePosition.create(m.timestamp, delegate.getX(), delegate.getY());
 	}
 
 	private void resetGameAndClearMessages() {
