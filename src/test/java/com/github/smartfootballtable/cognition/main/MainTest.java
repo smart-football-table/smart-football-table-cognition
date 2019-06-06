@@ -14,11 +14,11 @@ import com.github.smartfootballtable.cognition.main.Main;
 
 class MainTest {
 
-	private static final String MQTTPORT = "MQTTPORT";
-	private static final String MQTTHOST = "MQTTHOST";
-	private static final String TABLEHEIGHT = "TABLEHEIGHT";
-	private static final String TABLEWIDTH = "TABLEWIDTH";
-	private static final String TABLEUNIT = "TABLEUNIT";
+	private static final String ENV_MQTTPORT = "MQTTPORT";
+	private static final String ENV_MQTTHOST = "MQTTHOST";
+	private static final String ENV_TABLEHEIGHT = "TABLEHEIGHT";
+	private static final String ENV_TABLEWIDTH = "TABLEWIDTH";
+	private static final String ENV_TABLEUNIT = "TABLEUNIT";
 
 	@Test
 	void printsHelpOnMinusH() throws Exception {
@@ -33,11 +33,11 @@ class MainTest {
 	@Test
 	void canReadEnvVars() throws Exception {
 		Main main = new Main();
-		withEnvironmentVariable(MQTTPORT, "1") //
-				.and(MQTTHOST, "someHostname") //
-				.and(TABLEHEIGHT, "2") //
-				.and(TABLEWIDTH, "3") //
-				.and(TABLEUNIT, CENTIMETER.name()) //
+		withEnvironmentVariable(ENV_MQTTPORT, "1") //
+				.and(ENV_MQTTHOST, "someHostname") //
+				.and(ENV_TABLEHEIGHT, "2") //
+				.and(ENV_TABLEWIDTH, "3") //
+				.and(ENV_TABLEUNIT, CENTIMETER.name()) //
 				.execute(() -> assertThat(main.parseArgs(), is(true)));
 		assertThat(main.mqttPort, is(1));
 		assertThat(main.mqttHost, is("someHostname"));

@@ -8,6 +8,8 @@ import static io.moquette.BrokerConstants.HOST_PROPERTY_NAME;
 import static io.moquette.BrokerConstants.PORT_PROPERTY_NAME;
 import static java.lang.System.currentTimeMillis;
 import static java.time.Duration.ofSeconds;
+import static java.util.Arrays.asList;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.IntStream.range;
 import static org.hamcrest.CoreMatchers.is;
@@ -19,6 +21,8 @@ import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -131,6 +135,36 @@ class SFTCognitionIT {
 	}
 
 	@Test
+	void doesGenerateMessages() {
+		assertTimeoutPreemptively(timeout, () -> {
+			BlockingQueue<Message> queue = new ArrayBlockingQueue<>(10);
+			mqttConsumer.addConsumer(m -> {
+				if (sut.messages().isRelativePosition(m)) {
+					queue.offer(m);
+				}
+			});
+			newFixedThreadPool(1).execute(() -> sut.process(() -> {
+				try {
+					return sut.messages().parsePosition(queue.take().getPayload());
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
+				}
+			}));
+
+			publish("ball/position/rel", "0.123,0.456");
+			MILLISECONDS.sleep(250);
+
+			// TODO this is JSON payload
+			assertThat(messagesReceived, is(asList( //
+					message("ball/position/rel", "0.123,0.456"), //
+					message("game/start", ""), //
+					message("ball/position/abs", "{ \"x\":14.0, \"y\":31.0 }"), //
+					message("ball/position/rel", "{ \"x\":0.123, \"y\":0.456 }") //
+			)));
+		});
+	}
+
+	@Test
 	void onResetTheNewGameIsStartedImmediatelyAndWithoutTableInteraction()
 			throws IOException, MqttPersistenceException, MqttException, InterruptedException {
 		assertTimeoutPreemptively(timeout, () -> {
@@ -175,7 +209,11 @@ class SFTCognitionIT {
 	}
 
 	private void sendReset() throws MqttException, MqttPersistenceException {
-		secondClient.publish("game/reset", new MqttMessage("".getBytes()));
+		publish("game/reset", "");
+	}
+
+	private void publish(String topic, String payload) throws MqttException, MqttPersistenceException {
+		secondClient.publish(topic, new MqttMessage(payload.getBytes()));
 	}
 
 	private Stream<RelativePosition> positions(int count) {
