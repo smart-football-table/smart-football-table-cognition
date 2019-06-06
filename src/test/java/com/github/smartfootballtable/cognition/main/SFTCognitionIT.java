@@ -11,6 +11,7 @@ import static java.time.Duration.ofSeconds;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -153,14 +154,8 @@ class SFTCognitionIT {
 
 			publish("ball/position/rel", "0.123,0.456");
 			MILLISECONDS.sleep(250);
-
-			// TODO this is JSON payload
-			assertThat(messagesReceived, is(asList( //
-					message("ball/position/rel", "0.123,0.456"), //
-					message("game/start", ""), //
-					message("ball/position/abs", "{ \"x\":14.0, \"y\":31.0 }"), //
-					message("ball/position/rel", "{ \"x\":0.123, \"y\":0.456 }") //
-			)));
+			assertThat(messagesWithTopic("ball/position/abs").collect(toList()),
+					is(asList(message("ball/position/abs", "14.0,31.0"))));
 		});
 	}
 

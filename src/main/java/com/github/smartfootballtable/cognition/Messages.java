@@ -40,11 +40,10 @@ public class Messages {
 
 	public void pos(AbsolutePosition pos) {
 		publish(message(BALL_POSITION_ABS, posPayload(pos)));
-		publish(message(BALL_POSITION_REL, posPayload(pos.getRelativePosition())));
 	}
 
 	private String posPayload(Position pos) {
-		return "{ \"x\":" + pos.getX() + ", \"y\":" + pos.getY() + " }";
+		return pos.getX() + "," + pos.getY();
 	}
 
 	public void movement(Movement movement, Distance overallDistance) {

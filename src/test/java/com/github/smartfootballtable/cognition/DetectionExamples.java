@@ -18,8 +18,6 @@ import static com.github.smartfootballtable.cognition.Topic.TEAM_SCORE_RIGHT;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.create;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.noPosition;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
-import static com.jayway.jsonpath.matchers.JsonPathMatchers.isJson;
-import static com.jayway.jsonpath.matchers.JsonPathMatchers.withJsonPath;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -36,7 +34,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.core.Every.everyItem;
 import static org.junit.Assert.assertThat;
 
@@ -57,9 +54,10 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 
-import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
@@ -164,20 +162,13 @@ class DetectionExamples {
 	}
 
 	@Property
-	boolean ballPositionRelForEveryPosition(@ForAll("positionsOnTable") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
-		statistics(positions);
-		return process(positions, table).filter(topicIs(BALL_POSITION_REL)).count() == positions.size();
-	}
-
-	@Property
 	void allRelPositionAreBetween0And1(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll("table") Table table) {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(BALL_POSITION_REL)).map(Message::getPayload).collect(toList()),
 				everyItem(allOf( //
-						hasJsonNumberBetween("x", 0, 1), hasJsonNumberBetween("y", 0, 1))));
+						hasNumberBetween(0, 0, 1), hasNumberBetween(1, 0, 1))));
 	}
 
 	@Property
@@ -194,8 +185,8 @@ class DetectionExamples {
 		assertThat(
 				process(positions, table).filter(topicIs(BALL_POSITION_ABS)).map(Message::getPayload).collect(toList()),
 				everyItem(allOf( //
-						hasJsonNumberBetween("x", 0, (int) table.getWidth().value(table.getDistanceUnit())),
-						hasJsonNumberBetween("y", 0, (int) table.getHeight().value(table.getDistanceUnit())))));
+						hasNumberBetween(0, 0, (int) table.getWidth().value(table.getDistanceUnit())),
+						hasNumberBetween(1, 0, (int) table.getHeight().value(table.getDistanceUnit())))));
 	}
 
 	@Property
@@ -264,11 +255,21 @@ class DetectionExamples {
 		Statistics.collect(col.size() < 50 ? "<50" : col.size() < 100 ? "<100" : ">=100");
 	}
 
-	private Matcher<Object> hasJsonNumberBetween(String name, int min, int max) {
-		return allOf( //
-				isJson(withJsonPath("$." + name, instanceOf(Number.class))), //
-				isJson(withJsonPath("$[?(@." + name + " >= " + min + " && @." + name + " <= " + max + ")]")) //
-		);
+	private Matcher<Object> hasNumberBetween(int index, int min, int max) {
+		return new TypeSafeMatcher<Object>() {
+			@Override
+			public void describeTo(Description description) {
+				description.appendText(min + ">= " + "(value of index " + index + ") <=" + max);
+			}
+
+			@Override
+			protected boolean matchesSafely(Object item) {
+				String[] coords = String.valueOf(item).split("\\,");
+				double value = Double.parseDouble(coords[index]);
+				return value >= min && value <= max;
+			}
+
+		};
 	}
 
 	private Stream<Message> process(List<RelativePosition> positions, Table table) {
