@@ -243,7 +243,6 @@ class SFTCognitionTest {
 		givenATableOfSize(100, 80, CENTIMETER);
 		givenInputToProcessIs(ball().at(kickoff()));
 		whenInputWasProcessed();
-		thenTheRelativePositionOnTheTableIsPublished(centerX(), centerY());
 		thenTheAbsolutePositionOnTheTableIsPublished(100 / 2, 80 / 2);
 	}
 
@@ -252,7 +251,6 @@ class SFTCognitionTest {
 		givenATableOfSize(100, 80, CENTIMETER);
 		givenInputToProcessIs(ball().at(pos(0.0, 1.0)));
 		whenInputWasProcessed();
-		thenTheRelativePositionOnTheTableIsPublished(0.0, 1.0);
 		thenTheAbsolutePositionOnTheTableIsPublished(0, 80);
 	}
 
@@ -633,14 +631,6 @@ class SFTCognitionTest {
 		this.inProgressConsumer = inProgressConsumer;
 	}
 
-	private double centerX() {
-		return 0.5;
-	}
-
-	private double centerY() {
-		return 0.5;
-	}
-
 	private void givenATableOfSize(double width, double height, DistanceUnit distanceUnit) {
 		this.sut = new SFTCognition(new Table(width, height, distanceUnit), messageCollector);
 	}
@@ -678,10 +668,6 @@ class SFTCognitionTest {
 	private void resetGameAndClearMessages() {
 		this.collectedMessages.clear();
 		sut.resetGame();
-	}
-
-	private void thenTheRelativePositionOnTheTableIsPublished(double x, double y) {
-		assertOneMessageWithPayload(messagesWithTopic("ball/position/rel"), is(makePayload(x, y)));
 	}
 
 	private void thenTheAbsolutePositionOnTheTableIsPublished(double x, double y) {
@@ -737,7 +723,7 @@ class SFTCognitionTest {
 	}
 
 	private String makePayload(double x, double y) {
-		return "{ \"x\":" + x + ", \"y\":" + y + " }";
+		return x + "," + y;
 	}
 
 	private Stream<Message> messagesWithTopic(String topic) {
