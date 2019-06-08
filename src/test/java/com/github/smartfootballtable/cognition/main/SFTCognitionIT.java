@@ -9,7 +9,7 @@ import static io.moquette.BrokerConstants.PORT_PROPERTY_NAME;
 import static java.lang.System.currentTimeMillis;
 import static java.time.Duration.ofSeconds;
 import static java.util.Arrays.asList;
-import static java.util.concurrent.Executors.newFixedThreadPool;
+import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -69,7 +68,7 @@ class SFTCognitionIT {
 		brokerPort = randomPort();
 		broker = newMqttServer(LOCALHOST, brokerPort);
 		secondClient = newMqttClient(LOCALHOST, brokerPort, "client2", messagesReceived);
-		mainProcess = runInBackground(() -> {
+		mainProcess = runAsync(() -> {
 			try {
 				newMain().doMain();
 			} catch (IOException e) {
@@ -78,10 +77,6 @@ class SFTCognitionIT {
 		});
 		waitUntil((Supplier<MqttConsumer>) () -> mqttConsumer, s -> s.get() != null);
 		waitUntil(mqttConsumer, MqttConsumer::isConnected);
-	}
-
-	private Future<?> runInBackground(Runnable task) {
-		return newFixedThreadPool(1).submit(task);
 	}
 
 	private Main newMain() {
@@ -200,8 +195,9 @@ class SFTCognitionIT {
 			throws InterruptedException, MqttPersistenceException, MqttException {
 		messagesReceived.clear();
 		sendReset();
+		MILLISECONDS.sleep(100);
 		publish(provider(anyAmount(), () -> noPosition(currentTimeMillis())));
-		MILLISECONDS.sleep(50);
+		MILLISECONDS.sleep(100);
 		assertThat(messagesWithTopic("game/start").count(), is(1L));
 	}
 

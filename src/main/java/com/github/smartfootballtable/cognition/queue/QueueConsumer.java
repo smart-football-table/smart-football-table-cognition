@@ -1,6 +1,6 @@
 package com.github.smartfootballtable.cognition.queue;
 
-import static java.util.concurrent.Executors.newFixedThreadPool;
+import static java.util.concurrent.CompletableFuture.runAsync;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -16,7 +16,7 @@ public class QueueConsumer<T> implements Consumer<T> {
 
 	public QueueConsumer(Consumer<T> delegate, int queueSize) {
 		this.blockingQueue = new LinkedBlockingDeque<>(queueSize);
-		newFixedThreadPool(1).execute(() -> {
+		runAsync(() -> {
 			while (true) {
 				try {
 					delegate.accept(take());
