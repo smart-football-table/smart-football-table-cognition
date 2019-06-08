@@ -3,15 +3,21 @@ package com.github.smartfootballtable.cognition.data;
 public class Message {
 
 	public static Message message(String topic, Object payload) {
-		return new Message(topic, payload);
+		return new Message(topic, payload, false);
+	}
+
+	public static Message retainedMessage(String topic, Object payload) {
+		return new Message(topic, payload, true);
 	}
 
 	private final String topic;
 	private final String payload;
+	private final boolean retained;
 
-	protected Message(String topic, Object payload) {
+	protected Message(String topic, Object payload, boolean retained) {
 		this.topic = topic;
 		this.payload = payload == null ? null : String.valueOf(payload);
+		this.retained = retained;
 	}
 
 	public String getPayload() {
@@ -20,6 +26,10 @@ public class Message {
 
 	public String getTopic() {
 		return topic;
+	}
+
+	public boolean isRetained() {
+		return retained;
 	}
 
 	@Override

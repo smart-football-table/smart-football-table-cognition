@@ -52,7 +52,7 @@ public class SFTCognition {
 
 			@Override
 			public void teamScored(int teamid, int score) {
-				messages.teamScored(teamid, score);
+				messages.teamScore(teamid, score);
 			}
 
 			@Override

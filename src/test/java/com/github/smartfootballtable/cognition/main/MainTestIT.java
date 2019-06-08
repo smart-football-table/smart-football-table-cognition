@@ -15,12 +15,15 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -43,6 +46,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.github.smartfootballtable.cognition.Messages;
+import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.mqtt.MqttConsumer;
@@ -50,7 +55,7 @@ import com.github.smartfootballtable.cognition.mqtt.MqttConsumer;
 import io.moquette.server.Server;
 import io.moquette.server.config.MemoryConfig;
 
-class SFTCognitionIT {
+class MainTestIT {
 
 	private static Duration timeout = ofSeconds(30);
 
@@ -60,7 +65,10 @@ class SFTCognitionIT {
 	private int brokerPort;
 	private IMqttClient secondClient;
 	private List<Message> messagesReceived = new CopyOnWriteArrayList<>();
+
 	private volatile MqttConsumer mqttConsumer;
+	private volatile Messages messages;
+	private volatile Main main;
 	private volatile Future<?> mainProcess;
 
 	@BeforeEach
@@ -70,7 +78,8 @@ class SFTCognitionIT {
 		secondClient = newMqttClient(LOCALHOST, brokerPort, "client2", messagesReceived);
 		mainProcess = runAsync(() -> {
 			try {
-				newMain().doMain();
+				main = newMain();
+				main.doMain();
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -81,10 +90,18 @@ class SFTCognitionIT {
 
 	private Main newMain() {
 		Main main = new Main() {
+
 			@Override
 			protected MqttConsumer mqttConsumer() throws IOException {
 				mqttConsumer = super.mqttConsumer();
 				return mqttConsumer;
+			}
+
+			@Override
+			protected SFTCognition cognition(MqttConsumer mqttConsumer) {
+				SFTCognition cognition = super.cognition(mqttConsumer);
+				messages = cognition.messages();
+				return cognition;
 			}
 		};
 		main.mqttHost = LOCALHOST;
@@ -97,7 +114,7 @@ class SFTCognitionIT {
 
 	@AfterEach
 	void tearDown() throws Exception {
-		mainProcess.cancel(true);
+		haltMain();
 		secondClient.disconnect();
 		broker.stopServer();
 	}
@@ -191,13 +208,56 @@ class SFTCognitionIT {
 		});
 	}
 
+	@Test
+	void scoreMessagesAreRetained() throws IOException, InterruptedException, MqttPersistenceException, MqttException {
+		assertTimeoutPreemptively(timeout, () -> {
+			messages.teamScore(0, 2);
+			messages.teamScore(1, 3);
+			MILLISECONDS.sleep(250);
+
+			List<Message> receivedRetained = new ArrayList<>();
+			MqttClient thirdClient = newMqttClient(LOCALHOST, brokerPort, "third-client", receivedRetained);
+			MILLISECONDS.sleep(250);
+
+			assertThat(messagesWithTopic(receivedRetained, "team/score/0").map(Message::getPayload).collect(toList()),
+					is(asList("2")));
+			assertThat(messagesWithTopic(receivedRetained, "team/score/1").map(Message::getPayload).collect(toList()),
+					is(asList("3")));
+			thirdClient.disconnect();
+		});
+	}
+
+	@Test
+	void doesRemoveRetainedMessages()
+			throws IOException, InterruptedException, MqttPersistenceException, MqttException {
+		assertTimeoutPreemptively(timeout, () -> {
+			messages.teamScore(0, 2);
+			messages.teamScore(1, 3);
+			MILLISECONDS.sleep(250);
+			haltMain();
+			main.shutdownHook();
+			assertThat(messagesWithTopic("team/score/0").count(), is(not(0L)));
+			assertThat(messagesWithTopic("team/score/1").count(), is(not(0L)));
+
+			List<Message> receivedRetained = new ArrayList<>();
+			MqttClient thirdClient = newMqttClient(LOCALHOST, brokerPort, "third-client", receivedRetained);
+			MILLISECONDS.sleep(250);
+			assertThat(receivedRetained, is(empty()));
+			thirdClient.disconnect();
+		});
+	}
+
+	private void haltMain() {
+		mainProcess.cancel(true);
+	}
+
 	private void assertReceivesGameStartWhenSendingReset()
 			throws InterruptedException, MqttPersistenceException, MqttException {
 		messagesReceived.clear();
 		sendReset();
-		MILLISECONDS.sleep(100);
+		MILLISECONDS.sleep(250);
 		publish(provider(anyAmount(), () -> noPosition(currentTimeMillis())));
-		MILLISECONDS.sleep(100);
+		MILLISECONDS.sleep(250);
 		assertThat(messagesWithTopic("game/start").count(), is(1L));
 	}
 
@@ -206,7 +266,11 @@ class SFTCognitionIT {
 	}
 
 	private Stream<Message> messagesWithTopic(String topic) {
-		return messagesReceived.stream().filter(m -> m.getTopic().equals(topic));
+		return messagesWithTopic(messagesReceived, topic);
+	}
+
+	private Stream<Message> messagesWithTopic(List<Message> messages, String topic) {
+		return messages.stream().filter(m -> m.getTopic().equals(topic));
 	}
 
 	private void restartBroker() throws IOException {

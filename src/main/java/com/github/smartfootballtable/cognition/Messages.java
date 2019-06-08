@@ -1,10 +1,13 @@
 package com.github.smartfootballtable.cognition;
 
 import static com.github.smartfootballtable.cognition.data.Message.message;
+import static com.github.smartfootballtable.cognition.data.Message.retainedMessage;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.KMH;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPS;
 import static java.util.stream.Collectors.joining;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
@@ -28,6 +31,8 @@ public class Messages {
 
 	private final Consumer<Message> consumer;
 	private final DistanceUnit distanceUnit;
+
+	private final Set<String> retainedTopics = new HashSet<String>();
 
 	public Messages(Consumer<Message> consumer, DistanceUnit distanceUnit) {
 		this.consumer = consumer;
@@ -53,9 +58,9 @@ public class Messages {
 		publish(message("ball/distance/overall/" + distanceUnit.symbol(), overallDistance.value(distanceUnit)));
 	}
 
-	public void teamScored(int teamid, int score) {
+	public void teamScore(int teamid, int score) {
 		publish(message("team/scored", teamid));
-		publish(message("team/score/" + teamid, score));
+		publish(retainedMessage("team/score/" + teamid, score));
 		gameScore(teamid, score);
 	}
 
@@ -87,6 +92,14 @@ public class Messages {
 
 	private void publish(Message message) {
 		consumer.accept(message);
+		boolean retained = message.isRetained();
+		if (retained) {
+			retainedTopics.add(message.getTopic());
+		}
+	}
+
+	public void clearRetained() {
+		retainedTopics.forEach(t -> publish(retainedMessage(t, "")));
 	}
 
 	public boolean isReset(Message message) {

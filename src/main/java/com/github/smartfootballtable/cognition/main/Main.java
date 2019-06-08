@@ -37,6 +37,8 @@ public class Main {
 	@Option(name = "-mqttPort", usage = "port of the mqtt broker")
 	int mqttPort = 1883;
 
+	private SFTCognition cognition;
+
 	public static void main(String... args) throws IOException {
 		Main main = new Main();
 		if (main.parseArgs(args)) {
@@ -61,10 +63,19 @@ public class Main {
 
 	void doMain() throws IOException {
 		MqttConsumer mqttConsumer = mqttConsumer();
-		SFTCognition cognition = new SFTCognition(new Table(tableWidth, tableHeight, tableUnit),
+		cognition = cognition(mqttConsumer);
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownHook()));
+		processMqtt(cognition, mqttConsumer);
+	}
+
+	protected SFTCognition cognition(MqttConsumer mqttConsumer) {
+		return new SFTCognition(new Table(tableWidth, tableHeight, tableUnit),
 				new QueueConsumer<Message>(mqttConsumer, 300)).receiver(mqttConsumer)
 						.withGoalConfig(new GoalDetector.Config().frontOfGoalPercentage(40));
-		processMqtt(cognition, mqttConsumer);
+	}
+
+	protected void shutdownHook() {
+		cognition.messages().clearRetained();
 	}
 
 	protected MqttConsumer mqttConsumer() throws IOException {
