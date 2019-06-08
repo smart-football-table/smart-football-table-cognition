@@ -2,23 +2,19 @@ package com.github.smartfootballtable.cognition.main;
 
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
 import static com.github.smartfootballtable.cognition.main.EnvVars.envVarsAndArgs;
+import static com.github.smartfootballtable.cognition.main.MqttProcessor.processMqtt;
 import static org.kohsuke.args4j.OptionHandlerFilter.ALL;
 import static org.kohsuke.args4j.ParserProperties.defaults;
 
 import java.io.IOException;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.function.Supplier;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import com.github.smartfootballtable.cognition.Messages;
 import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
-import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.data.unit.DistanceUnit;
 import com.github.smartfootballtable.cognition.detector.GoalDetector;
 import com.github.smartfootballtable.cognition.mqtt.MqttConsumer;
@@ -44,7 +40,7 @@ public class Main {
 	public static void main(String... args) throws IOException {
 		Main main = new Main();
 		if (main.parseArgs(args)) {
-			main.doMain(args);
+			main.doMain();
 		}
 	}
 
@@ -63,31 +59,16 @@ public class Main {
 		return false;
 	}
 
-	void doMain(String... args) throws IOException {
-		MqttConsumer mqtt = mqtt(mqttHost, mqttPort);
+	void doMain() throws IOException {
+		MqttConsumer mqttConsumer = mqttConsumer();
 		SFTCognition cognition = new SFTCognition(new Table(tableWidth, tableHeight, tableUnit),
-				new QueueConsumer<Message>(mqtt, 300)).receiver(mqtt)
+				new QueueConsumer<Message>(mqttConsumer, 300)).receiver(mqttConsumer)
 						.withGoalConfig(new GoalDetector.Config().frontOfGoalPercentage(40));
-		// TODO write test
-		BlockingQueue<Message> queue = new ArrayBlockingQueue<>(10);
-		mqtt.addConsumer(m -> consume(queue, cognition.messages(), m));
-		cognition.process(supplier(queue, cognition.messages()));
+		processMqtt(cognition, mqttConsumer);
 	}
 
-	private void consume(BlockingQueue<Message> queue, Messages messages, Message m) {
-		if (messages.isRelativePosition(m)) {
-			queue.offer(m);
-		}
-	}
-
-	private Supplier<RelativePosition> supplier(BlockingQueue<Message> queue, Messages messages) {
-		return () -> {
-			try {
-				return messages.parsePosition(queue.take().getPayload());
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
-		};
+	protected MqttConsumer mqttConsumer() throws IOException {
+		return new MqttConsumer(mqttHost, mqttPort);
 	}
 
 	private void printHelp(CmdLineParser parser) {
@@ -96,10 +77,6 @@ public class Main {
 		parser.printUsage(System.err);
 		System.err.println();
 		System.err.println("\tExample: java " + mainClassName + parser.printExample(ALL));
-	}
-
-	private MqttConsumer mqtt(String host, int port) throws IOException {
-		return new MqttConsumer(host, port);
 	}
 
 }

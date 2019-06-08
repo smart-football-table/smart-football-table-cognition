@@ -1,5 +1,8 @@
 package com.github.smartfootballtable.cognition.mqtt;
 
+import static com.github.smartfootballtable.cognition.data.Message.message;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
@@ -25,7 +28,8 @@ public class MqttConsumer implements Consumer<Message>, MessageProvider, Closeab
 
 	public MqttConsumer(String host, int port) throws IOException {
 		try {
-			mqttClient = new MqttClient("tcp://" + host + ":" + port, "SFT-Detection", new MemoryPersistence());
+			mqttClient = new MqttClient("tcp://" + host + ":" + port, getClass().getName(), new MemoryPersistence());
+			mqttClient.setTimeToWait(SECONDS.toMillis(1));
 			mqttClient.setCallback(callback());
 			mqttClient.connect(connectOptions());
 		} catch (MqttException e) {
@@ -37,9 +41,10 @@ public class MqttConsumer implements Consumer<Message>, MessageProvider, Closeab
 		return new MqttCallbackExtended() {
 
 			@Override
-			public void messageArrived(String topic, MqttMessage message) throws Exception {
+			public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
+				Message message = message(topic, new String(mqttMessage.getPayload()));
 				for (Consumer<Message> consumer : consumers) {
-					consumer.accept(Message.message(topic, new String(message.getPayload())));
+					consumer.accept(message);
 				}
 			}
 
@@ -73,9 +78,9 @@ public class MqttConsumer implements Consumer<Message>, MessageProvider, Closeab
 	}
 
 	@Override
-	public void accept(Message m) {
+	public void accept(Message message) {
 		try {
-			mqttClient.publish(m.getTopic(), new MqttMessage(m.getPayload().getBytes()));
+			mqttClient.publish(message.getTopic(), new MqttMessage(message.getPayload().getBytes()));
 		} catch (MqttException e) {
 			throw new RuntimeException(e);
 		}

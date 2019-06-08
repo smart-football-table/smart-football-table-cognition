@@ -18,7 +18,11 @@ public class QueueConsumer<T> implements Consumer<T> {
 		this.blockingQueue = new LinkedBlockingDeque<>(queueSize);
 		newFixedThreadPool(1).execute(() -> {
 			while (true) {
-				delegate.accept(take());
+				try {
+					delegate.accept(take());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		});
 
