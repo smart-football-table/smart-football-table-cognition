@@ -1,8 +1,8 @@
 package com.github.smartfootballtable.cognition.data;
 
-import javax.annotation.Generated;
-
 import com.github.smartfootballtable.cognition.data.unit.DistanceUnit;
+
+import lombok.Generated;
 
 public class Distance {
 
@@ -30,7 +30,7 @@ public class Distance {
 		throw new IllegalStateException("not yet implemented");
 	}
 
-	@Generated("Eclipse-IDE")
+	@Generated
 	@Override
 	public String toString() {
 		return "Distance [value=" + value + ", distanceUnit=" + distanceUnit + "]";

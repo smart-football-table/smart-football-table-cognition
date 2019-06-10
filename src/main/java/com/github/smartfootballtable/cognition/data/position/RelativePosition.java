@@ -2,7 +2,7 @@ package com.github.smartfootballtable.cognition.data.position;
 
 import static java.lang.Math.abs;
 
-import javax.annotation.Generated;
+import lombok.Generated;
 
 public abstract class RelativePosition implements Position {
 
@@ -127,7 +127,7 @@ public abstract class RelativePosition implements Position {
 				&& Double.doubleToLongBits(getY()) == Double.doubleToLongBits(other.getY());
 	}
 
-	@Generated("Eclipse-IDE")
+	@Generated
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -141,7 +141,7 @@ public abstract class RelativePosition implements Position {
 		return result;
 	}
 
-	@Generated("Eclipse-IDE")
+	@Generated
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -156,7 +156,7 @@ public abstract class RelativePosition implements Position {
 		return equalsPosition(other);
 	}
 
-	@Generated("Eclipse-IDE")
+	@Generated
 	@Override
 	public String toString() {
 		return "RelativePosition [timestamp=" + timestamp + ", x=" + getX() + ", y=" + getY() + "]";
