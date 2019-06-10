@@ -84,8 +84,19 @@ class DetectionExamples {
 	void ballOnTableNeverWillRaiseTeamScoreOrTeamsScoredEvents(
 			@ForAll("positionsOnTable") List<RelativePosition> positions, @ForAll("table") Table table) {
 		statistics(positions);
-		assertThat(process(positions, table).filter(ignoreAllButNot(TEAM_SCORE_LEFT, TEAM_SCORED)).collect(toList()),
-				is(empty()));
+		assertThat(process(positions, table) //
+				.filter(anyOf(TEAM_SCORE_LEFT, TEAM_SCORE_RIGHT, TEAM_SCORED)) //
+				.filter(isInitialScore().negate()) //
+				.collect(toList()), is(empty()));
+	}
+
+	private Predicate<Message> isInitialScore() {
+		return TEAM_SCORE_LEFT.getPredicate().and(initialScorePayload())
+				.or(TEAM_SCORE_RIGHT.getPredicate().and(initialScorePayload()));
+	}
+
+	private Predicate<Message> initialScorePayload() {
+		return m -> m.getPayload().equals("0");
 	}
 
 	@Property
@@ -102,7 +113,7 @@ class DetectionExamples {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_LEFT)).map(Message::getPayload).collect(toList()),
-				is(asList("1")));
+				is(asList("0", "1")));
 	}
 
 	@Property
@@ -119,7 +130,7 @@ class DetectionExamples {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_RIGHT)).map(Message::getPayload).collect(toList()),
-				is(asList("1")));
+				is(asList("0", "1")));
 	}
 
 	@Property
@@ -128,7 +139,7 @@ class DetectionExamples {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_LEFT)).map(Message::getPayload).collect(toList()),
-				is(asList("1", "0")));
+				is(asList("0", "1", "0")));
 	}
 
 	@Property
@@ -137,7 +148,7 @@ class DetectionExamples {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_RIGHT)).map(Message::getPayload).collect(toList()),
-				is(asList("1", "0")));
+				is(asList("0", "1", "0")));
 	}
 
 	@Property
@@ -280,7 +291,7 @@ class DetectionExamples {
 		return messages.stream();
 	}
 
-	private Predicate<Message> ignoreAllButNot(Topic... topics) {
+	private Predicate<Message> anyOf(Topic... topics) {
 		return anyOfTopic(EnumSet.allOf(Topic.class).stream().filter(f -> !Arrays.asList(topics).contains(f)));
 	}
 

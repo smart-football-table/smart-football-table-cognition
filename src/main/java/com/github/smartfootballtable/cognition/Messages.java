@@ -41,6 +41,9 @@ public class Messages {
 
 	public void gameStart() {
 		publish(message(GAME_START, ""));
+		// TODO do not depend on amount of teams here
+		publishTeamScore(0, 0);
+		publishTeamScore(1, 0);
 	}
 
 	public void pos(AbsolutePosition pos) {
@@ -60,8 +63,12 @@ public class Messages {
 
 	public void teamScore(int teamid, int score) {
 		publish(message("team/scored", teamid));
-		publish(retainedMessage("team/score/" + teamid, score));
+		publishTeamScore(teamid, score);
 		gameScore(teamid, score);
+	}
+
+	private void publishTeamScore(int teamid, int score) {
+		publish(retainedMessage("team/score/" + teamid, score));
 	}
 
 	/**
