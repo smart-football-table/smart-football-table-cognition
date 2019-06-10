@@ -44,8 +44,10 @@ import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
@@ -53,6 +55,7 @@ import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import io.moquette.server.Server;
 import io.moquette.server.config.MemoryConfig;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class MainTestIT {
 
 	private static Duration timeout = ofSeconds(30);
@@ -216,7 +219,9 @@ class MainTestIT {
 	}
 
 	@Test
-	@Disabled // fails when suite gets executed
+	// although no test depends on any other, this test fails when run as the last
+	// one
+	@Order(0)
 	void doesReconnectAndResubscribe()
 			throws IOException, InterruptedException, MqttPersistenceException, MqttException {
 		assertTimeoutPreemptively(timeout, () -> {
