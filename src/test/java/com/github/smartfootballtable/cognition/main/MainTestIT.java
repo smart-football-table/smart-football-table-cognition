@@ -146,7 +146,7 @@ class MainTestIT {
 
 	@BeforeEach
 	void setup() throws Exception {
-		setDefaultTimeout(timeout.getSeconds(), SECONDS);
+		setDefaultTimeout(timeout.getSeconds() / 2, SECONDS);
 		setDefaultPollInterval(500, MILLISECONDS);
 		brokerPort = randomPort();
 		broker = newMqttServer(LOCALHOST, brokerPort);
@@ -196,7 +196,7 @@ class MainTestIT {
 	}
 
 	@Test
-	void doesGenerateMessages() {
+	void doesPublishWhenReceiving() {
 		assertTimeoutPreemptively(timeout, () -> {
 			publish("ball/position/rel", "0.123,0.456");
 			await().untilAsserted(() -> {
