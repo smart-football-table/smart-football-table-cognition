@@ -406,6 +406,16 @@ class SFTCognitionTest {
 	}
 
 	@Test
+	void afterRevertedGoalHappensOnOtherSide() throws IOException {
+		givenATableOfAnySize();
+		givenFrontOfGoalPercentage(20);
+		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(anyCorner()).then().prepareForRightGoal()
+				.then().score());
+		whenInputWasProcessed();
+		thenPayloadsWithTopicAre("team/score/1", "1");
+	}
+
+	@Test
 	void doesSendWinner() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
