@@ -14,21 +14,22 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Awaitility.setDefaultPollInterval;
+import static org.awaitility.Awaitility.setDefaultTimeout;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -40,17 +41,13 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
-import org.eclipse.paho.client.mqttv3.MqttSecurityException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.github.smartfootballtable.cognition.Messages;
-import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
-import com.github.smartfootballtable.cognition.mqtt.MqttConsumer;
 
 import io.moquette.server.Server;
 import io.moquette.server.config.MemoryConfig;
@@ -58,52 +55,116 @@ import io.moquette.server.config.MemoryConfig;
 class MainTestIT {
 
 	private static Duration timeout = ofSeconds(30);
-
 	private static final String LOCALHOST = "localhost";
+
+	static class MqttClientForTest implements Closeable {
+
+		private final IMqttClient client;
+		private final List<Message> received = new CopyOnWriteArrayList<>();
+
+		public List<Message> getReceived() {
+			return received;
+		}
+
+		public MqttClientForTest(String brokerHost, int brokerPort, String name) throws IOException {
+			this.client = createClient(brokerHost, brokerPort, name, received);
+		}
+
+		private IMqttClient createClient(String brokerHost, int brokerPort, String name, List<Message> received)
+				throws IOException {
+			try {
+				MqttClient client = new MqttClient("tcp://" + brokerHost + ":" + brokerPort, name,
+						new MemoryPersistence());
+				client.setTimeToWait(SECONDS.toMillis(1));
+				client.connect(connectOptions());
+				client.setCallback(new MqttCallbackExtended() {
+
+					@Override
+					public void deliveryComplete(IMqttDeliveryToken token) {
+					}
+
+					@Override
+					public void messageArrived(String topic, MqttMessage message) throws Exception {
+						received.add(message(topic, new String(message.getPayload())));
+					}
+
+					@Override
+					public void connectComplete(boolean reconnect, String serverURI) {
+						try {
+							subscribe(client);
+						} catch (MqttException e) {
+							throw new RuntimeException(e);
+						}
+					}
+
+					@Override
+					public void connectionLost(Throwable cause) {
+					}
+				});
+				subscribe(client);
+				return client;
+			} catch (MqttException e) {
+				throw new IOException(e);
+			}
+		}
+
+		private static MqttConnectOptions connectOptions() {
+			MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
+			mqttConnectOptions.setAutomaticReconnect(true);
+			return mqttConnectOptions;
+		}
+
+		private static void subscribe(MqttClient client) throws MqttException {
+			client.subscribe("#");
+		}
+
+		public void close() throws IOException {
+			try {
+				client.disconnect();
+				client.close();
+			} catch (MqttException e) {
+				throw new IOException(e);
+			}
+		}
+
+		public boolean isConnected() {
+			return client.isConnected();
+		}
+
+		public void publish(String topic, MqttMessage message) throws MqttException, MqttPersistenceException {
+			client.publish(topic, message);
+		}
+
+	}
 
 	private Server broker;
 	private int brokerPort;
-	private IMqttClient secondClient;
-	private List<Message> messagesReceived = new CopyOnWriteArrayList<>();
+	private MqttClientForTest secondClient;
 
-	private volatile MqttConsumer mqttConsumer;
-	private volatile Messages messages;
 	private volatile Main main;
 	private volatile Future<?> mainProcess;
 
 	@BeforeEach
 	void setup() throws Exception {
+		setDefaultTimeout(timeout.getSeconds(), SECONDS);
+		setDefaultPollInterval(500, MILLISECONDS);
 		brokerPort = randomPort();
 		broker = newMqttServer(LOCALHOST, brokerPort);
-		secondClient = newMqttClient(LOCALHOST, brokerPort, "client2", messagesReceived);
+		secondClient = new MqttClientForTest(LOCALHOST, brokerPort, "client2");
+		main = newMain();
 		mainProcess = runAsync(() -> {
 			try {
-				main = newMain();
 				main.doMain();
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		});
-		waitUntil((Supplier<MqttConsumer>) () -> mqttConsumer, s -> s.get() != null);
-		waitUntil(mqttConsumer, MqttConsumer::isConnected);
+		await().until(() -> main.mqttConsumer() != null);
+		await().until(() -> main.mqttConsumer().isConnected());
 	}
 
 	private Main newMain() {
-		Main main = new Main() {
-
-			@Override
-			protected MqttConsumer mqttConsumer() throws IOException {
-				mqttConsumer = super.mqttConsumer();
-				return mqttConsumer;
-			}
-
-			@Override
-			protected SFTCognition cognition(MqttConsumer mqttConsumer) {
-				SFTCognition cognition = super.cognition(mqttConsumer);
-				messages = cognition.messages();
-				return cognition;
-			}
-		};
+		Main main = new Main();
 		main.mqttHost = LOCALHOST;
 		main.mqttPort = brokerPort;
 		main.tableWidth = 120;
@@ -115,7 +176,7 @@ class MainTestIT {
 	@AfterEach
 	void tearDown() throws Exception {
 		haltMain();
-		secondClient.disconnect();
+		secondClient.close();
 		broker.stopServer();
 	}
 
@@ -134,56 +195,13 @@ class MainTestIT {
 		return server;
 	}
 
-	private MqttClient newMqttClient(String host, int port, String id, List<Message> received)
-			throws MqttException, MqttSecurityException {
-		MqttClient client = new MqttClient("tcp://" + host + ":" + port, id, new MemoryPersistence());
-		client.setTimeToWait(SECONDS.toMillis(1));
-		client.connect(connectOptions());
-		client.setCallback(new MqttCallbackExtended() {
-
-			@Override
-			public void deliveryComplete(IMqttDeliveryToken token) {
-			}
-
-			@Override
-			public void messageArrived(String topic, MqttMessage message) throws Exception {
-				received.add(message(topic, new String(message.getPayload())));
-			}
-
-			@Override
-			public void connectComplete(boolean reconnect, String serverURI) {
-				try {
-					subscribe(client);
-				} catch (MqttException e) {
-					throw new RuntimeException(e);
-				}
-			}
-
-			@Override
-			public void connectionLost(Throwable cause) {
-			}
-		});
-		subscribe(client);
-		return client;
-	}
-
-	private void subscribe(MqttClient client) throws MqttException {
-		client.subscribe("#");
-	}
-
-	private MqttConnectOptions connectOptions() {
-		MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
-		mqttConnectOptions.setAutomaticReconnect(true);
-		return mqttConnectOptions;
-	}
-
 	@Test
 	void doesGenerateMessages() {
 		assertTimeoutPreemptively(timeout, () -> {
 			publish("ball/position/rel", "0.123,0.456");
-			MILLISECONDS.sleep(250);
-			assertThat(messagesWithTopic("ball/position/abs").collect(toList()),
-					is(asList(message("ball/position/abs", "14.0,31.0"))));
+			await().untilAsserted(() -> {
+				assertThat(payloads(secondClient.getReceived(), "ball/position/abs"), is(asList("14.0,31.0")));
+			});
 		});
 	}
 
@@ -202,8 +220,8 @@ class MainTestIT {
 		assertTimeoutPreemptively(timeout, () -> {
 			publish(positions(anyAmount()));
 			restartBroker();
-			waitUntil(secondClient, IMqttClient::isConnected);
-			waitUntil(mqttConsumer, MqttConsumer::isConnected);
+			await().until(secondClient::isConnected);
+			await().until(main.mqttConsumer()::isConnected);
 			assertReceivesGameStartWhenSendingReset();
 		});
 	}
@@ -211,19 +229,12 @@ class MainTestIT {
 	@Test
 	void scoreMessagesAreRetained() throws IOException, InterruptedException, MqttPersistenceException, MqttException {
 		assertTimeoutPreemptively(timeout, () -> {
-			messages.teamScore(0, 2);
-			messages.teamScore(1, 3);
-			MILLISECONDS.sleep(250);
-
-			List<Message> receivedRetained = new ArrayList<>();
-			MqttClient thirdClient = newMqttClient(LOCALHOST, brokerPort, "third-client", receivedRetained);
-			MILLISECONDS.sleep(250);
-
-			assertThat(messagesWithTopic(receivedRetained, "team/score/0").map(Message::getPayload).collect(toList()),
-					is(asList("2")));
-			assertThat(messagesWithTopic(receivedRetained, "team/score/1").map(Message::getPayload).collect(toList()),
-					is(asList("3")));
-			thirdClient.disconnect();
+			publishScoresAndShutdown();
+			try (MqttClientForTest thirdClient = new MqttClientForTest(LOCALHOST, brokerPort, "third-client")) {
+				List<Message> receivedRetained = thirdClient.getReceived();
+				await().untilAsserted(() -> assertThat(payloads(receivedRetained, "team/score/0"), is(asList("2"))));
+				await().untilAsserted(() -> assertThat(payloads(receivedRetained, "team/score/1"), is(asList("3"))));
+			}
 		});
 	}
 
@@ -231,42 +242,44 @@ class MainTestIT {
 	void doesRemoveRetainedMessages()
 			throws IOException, InterruptedException, MqttPersistenceException, MqttException {
 		assertTimeoutPreemptively(timeout, () -> {
-			messages.teamScore(0, 2);
-			messages.teamScore(1, 3);
-			MILLISECONDS.sleep(250);
-			haltMain();
+			publishScoresAndShutdown();
 			main.shutdownHook();
-			assertThat(messagesWithTopic("team/score/0").count(), is(not(0L)));
-			assertThat(messagesWithTopic("team/score/1").count(), is(not(0L)));
-
-			List<Message> receivedRetained = new ArrayList<>();
-			MqttClient thirdClient = newMqttClient(LOCALHOST, brokerPort, "third-client", receivedRetained);
-			MILLISECONDS.sleep(250);
-			assertThat(receivedRetained, is(empty()));
-			thirdClient.disconnect();
+			await().untilAsserted(() -> {
+				try (MqttClientForTest thirdClient = new MqttClientForTest(LOCALHOST, brokerPort, "third-client")) {
+					assertThat(thirdClient.getReceived(), is(empty()));
+				}
+			});
 		});
+	}
+
+	private void publishScoresAndShutdown() {
+		main.cognition().messages().teamScore(0, 2);
+		main.cognition().messages().teamScore(1, 3);
+		await().until(() -> messagesWithTopic(secondClient.getReceived(), "team/score/0").count() == 1L);
+		await().until(() -> messagesWithTopic(secondClient.getReceived(), "team/score/1").count() == 1L);
+		haltMain();
 	}
 
 	private void haltMain() {
 		mainProcess.cancel(true);
 	}
 
+	private List<String> payloads(List<Message> receivedRetained, String topic) {
+		return messagesWithTopic(receivedRetained, topic).map(Message::getPayload).collect(toList());
+	}
+
 	private void assertReceivesGameStartWhenSendingReset()
 			throws InterruptedException, MqttPersistenceException, MqttException {
-		messagesReceived.clear();
+		secondClient.getReceived().clear();
 		sendReset();
-		MILLISECONDS.sleep(250);
 		publish(provider(anyAmount(), () -> noPosition(currentTimeMillis())));
-		MILLISECONDS.sleep(250);
-		assertThat(messagesWithTopic("game/start").count(), is(1L));
+		await().untilAsserted(() -> {
+			assertThat(messagesWithTopic(secondClient.getReceived(), "game/start").count(), is(1L));
+		});
 	}
 
 	private int anyAmount() {
 		return 5;
-	}
-
-	private Stream<Message> messagesWithTopic(String topic) {
-		return messagesWithTopic(messagesReceived, topic);
 	}
 
 	private Stream<Message> messagesWithTopic(List<Message> messages, String topic) {
@@ -276,12 +289,6 @@ class MainTestIT {
 	private void restartBroker() throws IOException {
 		broker.stopServer();
 		broker = newMqttServer(LOCALHOST, brokerPort);
-	}
-
-	private static <T> void waitUntil(T object, Predicate<T> predicate) throws InterruptedException {
-		while (!predicate.test(object)) {
-			MILLISECONDS.sleep(500);
-		}
 	}
 
 	private void sendReset() throws MqttException, MqttPersistenceException {
@@ -312,7 +319,7 @@ class MainTestIT {
 		return range(0, count).peek(i -> sleep()).mapToObj(i -> supplier.get());
 	}
 
-	private void sleep() {
+	private static void sleep() {
 		try {
 			MILLISECONDS.sleep(10);
 		} catch (InterruptedException e) {

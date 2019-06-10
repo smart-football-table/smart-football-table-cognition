@@ -39,6 +39,8 @@ public class Main {
 
 	private SFTCognition cognition;
 
+	private MqttConsumer mqttConsumer;
+
 	public static void main(String... args) throws IOException {
 		Main main = new Main();
 		if (main.parseArgs(args)) {
@@ -62,24 +64,32 @@ public class Main {
 	}
 
 	void doMain() throws IOException {
-		MqttConsumer mqttConsumer = mqttConsumer();
-		cognition = cognition(mqttConsumer);
+		mqttConsumer = newMqttConsumer();
+		cognition = newCognition(mqttConsumer);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownHook()));
 		processMqtt(cognition, mqttConsumer);
 	}
 
-	protected SFTCognition cognition(MqttConsumer mqttConsumer) {
+	private SFTCognition newCognition(MqttConsumer mqttConsumer) {
 		return new SFTCognition(new Table(tableWidth, tableHeight, tableUnit),
 				new QueueConsumer<Message>(mqttConsumer, 300)).receiver(mqttConsumer)
 						.withGoalConfig(new GoalDetector.Config().frontOfGoalPercentage(40));
 	}
 
-	protected void shutdownHook() {
-		cognition.messages().clearRetained();
+	private MqttConsumer newMqttConsumer() throws IOException {
+		return new MqttConsumer(mqttHost, mqttPort);
 	}
 
-	protected MqttConsumer mqttConsumer() throws IOException {
-		return new MqttConsumer(mqttHost, mqttPort);
+	public SFTCognition cognition() {
+		return cognition;
+	}
+
+	public MqttConsumer mqttConsumer() {
+		return mqttConsumer;
+	}
+
+	protected void shutdownHook() {
+		cognition.messages().clearRetained();
 	}
 
 	private void printHelp(CmdLineParser parser) {

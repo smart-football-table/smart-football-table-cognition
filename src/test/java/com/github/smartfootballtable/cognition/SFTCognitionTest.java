@@ -9,6 +9,7 @@ import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuil
 import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.pos;
 import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.upperLeftCorner;
 import static com.github.smartfootballtable.cognition.data.Message.message;
+import static com.github.smartfootballtable.cognition.data.position.RelativePosition.create;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.INCH;
 import static java.util.Arrays.asList;
@@ -660,9 +661,9 @@ class SFTCognitionTest {
 		sut.process(inputMessages.stream().map(this::toPosition).peek(inProgressConsumer));
 	}
 
-	private RelativePosition toPosition(TimestampedMessage m) {
-		RelativePosition delegate = sut.messages().parsePosition(m.message.getPayload());
-		return delegate == null ? null : RelativePosition.create(m.timestamp, delegate.getX(), delegate.getY());
+	private RelativePosition toPosition(TimestampedMessage timestampedMessage) {
+		RelativePosition delegate = sut.messages().parsePosition(timestampedMessage.message.getPayload());
+		return delegate == null ? null : create(timestampedMessage.timestamp, delegate.getX(), delegate.getY());
 	}
 
 	private void resetGameAndClearMessages() {
