@@ -42,9 +42,9 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.github.smartfootballtable.cognition.data.Message;
@@ -216,7 +216,7 @@ class MainTestIT {
 	}
 
 	@Test
-	@Ignore // fails when suite gets executed
+	@Disabled // fails when suite gets executed
 	void doesReconnectAndResubscribe()
 			throws IOException, InterruptedException, MqttPersistenceException, MqttException {
 		assertTimeoutPreemptively(timeout, () -> {
