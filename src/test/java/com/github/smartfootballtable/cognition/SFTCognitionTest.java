@@ -20,19 +20,23 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
+import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
@@ -418,6 +422,8 @@ class SFTCognitionTest {
 				.prepareForLeftGoal().then().score() //
 		);
 		whenInputWasProcessed();
+		assertThat(lastMessageWithTopic("team/score/0").getPayload(), is("6"));
+		thenNoMessageWithTopicIsSent("team/score/1");
 		thenWinnerAre(0);
 	}
 
@@ -438,7 +444,37 @@ class SFTCognitionTest {
 				.prepareForRightGoal().score() //
 		);
 		whenInputWasProcessed();
+		assertThat(lastMessageWithTopic("team/score/0").getPayload(), is("5"));
+		assertThat(lastMessageWithTopic("team/score/1").getPayload(), is("5"));
 		thenWinnerAre(0, 1);
+	}
+
+	@Test
+	void newGameGetsStarted() throws IOException {
+		givenATableOfAnySize();
+		givenFrontOfGoalPercentage(20);
+		givenInputToProcessIs(ball() //
+				.prepareForLeftGoal().then().score().then() //
+				.prepareForLeftGoal().then().score().then() //
+				.prepareForLeftGoal().then().score().then() //
+				.prepareForLeftGoal().then().score().then() //
+				.prepareForLeftGoal().then().score().then() //
+				.prepareForLeftGoal().then().score() //
+		);
+		whenInputWasProcessed();
+		assertThat(lastMessageWithTopic("team/score/0").getPayload(), is("6"));
+		thenNoMessageWithTopicIsSent("team/score/1");
+		collectedMessages.clear();
+
+		givenInputToProcessIs(ball() //
+				.prepareForRightGoal().then().score().then() //
+				.prepareForRightGoal().then().score().then() //
+				.prepareForRightGoal().then().score().then() //
+				.prepareForLeftGoal().then().score().then() //
+		);
+		whenInputWasProcessed();
+		assertThat(lastMessageWithTopic("team/score/0").getPayload(), is("1"));
+		assertThat(lastMessageWithTopic("team/score/1").getPayload(), is("3"));
 	}
 
 	@Test
@@ -659,6 +695,7 @@ class SFTCognitionTest {
 	void whenInputWasProcessed() throws IOException {
 		sut = sut.withGoalConfig(goalDetectorConfig);
 		sut.process(inputMessages.stream().map(this::toPosition).peek(inProgressConsumer));
+		inputMessages.clear();
 	}
 
 	private RelativePosition toPosition(TimestampedMessage timestampedMessage) {
@@ -701,6 +738,11 @@ class SFTCognitionTest {
 
 	private Stream<Message> collectedMessages(Predicate<Message> predicate) {
 		return collectedMessages.stream().filter(predicate);
+	}
+
+	private Message lastMessageWithTopic(String topic) {
+		List<Message> messages = messagesWithTopic(topic).collect(toList());
+		return messages.isEmpty() ? null : messages.get(messages.size() - 1);
 	}
 
 	private void thenPayloadsWithTopicAre(String topic, String... payloads) {
