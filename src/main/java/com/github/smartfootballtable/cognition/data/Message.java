@@ -1,5 +1,7 @@
 package com.github.smartfootballtable.cognition.data;
 
+import javax.annotation.Generated;
+
 public class Message {
 
 	public static Message message(String topic, Object payload) {
@@ -32,6 +34,7 @@ public class Message {
 		return retained;
 	}
 
+	@Generated("Eclipse-IDE")
 	@Override
 	public int hashCode() {
 		int prime = 31;
@@ -41,6 +44,7 @@ public class Message {
 		return result;
 	}
 
+	@Generated("Eclipse-IDE")
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -63,6 +67,7 @@ public class Message {
 		return true;
 	}
 
+	@Generated("Eclipse-IDE")
 	@Override
 	public String toString() {
 		return "Message [topic=" + topic + ", payload=" + payload + "]";

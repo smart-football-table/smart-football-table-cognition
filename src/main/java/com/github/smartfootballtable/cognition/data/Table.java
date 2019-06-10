@@ -1,5 +1,7 @@
 package com.github.smartfootballtable.cognition.data;
 
+import javax.annotation.Generated;
+
 import com.github.smartfootballtable.cognition.data.position.AbsolutePosition;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.data.unit.DistanceUnit;
@@ -39,6 +41,7 @@ public class Table {
 		return distanceUnit;
 	}
 
+	@Generated("Eclipse-IDE")
 	@Override
 	public String toString() {
 		return "Table [width=" + width + ", height=" + height + ", distanceUnit=" + distanceUnit + "]";

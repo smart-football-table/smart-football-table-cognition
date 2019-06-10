@@ -1,5 +1,7 @@
 package com.github.smartfootballtable.cognition.data.position;
 
+import javax.annotation.Generated;
+
 public class AbsolutePosition implements Position {
 
 	private final RelativePosition relativePosition;
@@ -36,6 +38,7 @@ public class AbsolutePosition implements Position {
 		return y;
 	}
 
+	@Generated("Eclipse-IDE")
 	@Override
 	public String toString() {
 		return "AbsolutePosition [relativePosition=" + relativePosition + ", x=" + x + ", y=" + y + "]";
