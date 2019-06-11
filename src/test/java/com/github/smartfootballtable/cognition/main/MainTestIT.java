@@ -19,7 +19,6 @@ import static org.awaitility.Awaitility.setDefaultPollInterval;
 import static org.awaitility.Awaitility.setDefaultTimeout;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.empty;
-import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 import java.io.Closeable;
@@ -51,6 +50,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
+import com.github.smartfootballtable.cognition.mqtt.MqttConsumer;
 
 import io.moquette.server.Server;
 import io.moquette.server.config.MemoryConfig;
@@ -163,8 +163,10 @@ class MainTestIT {
 				throw new RuntimeException(e);
 			}
 		});
-		await().until(() -> main.mqttConsumer() != null);
-		await().until(() -> main.mqttConsumer().isConnected());
+		await().until(() -> {
+			MqttConsumer consumer = main.mqttConsumer();
+			return consumer != null && consumer.isConnected();
+		});
 	}
 
 	private Main newMain() {
@@ -203,9 +205,7 @@ class MainTestIT {
 	void doesPublishWhenReceiving() {
 		assertTimeoutPreemptively(timeout, () -> {
 			publish("ball/position/rel", "0.123,0.456");
-			await().untilAsserted(() -> {
-				assertThat(payloads(secondClient.getReceived(), "ball/position/abs"), is(asList("14.0,31.0")));
-			});
+			await().until(() -> payloads(secondClient.getReceived(), "ball/position/abs"), is(asList("14.0,31.0")));
 		});
 	}
 
@@ -239,8 +239,8 @@ class MainTestIT {
 			publishScoresAndShutdown();
 			try (MqttClientForTest thirdClient = new MqttClientForTest(LOCALHOST, brokerPort, "third-client")) {
 				List<Message> receivedRetained = thirdClient.getReceived();
-				await().untilAsserted(() -> assertThat(payloads(receivedRetained, "team/score/0"), is(asList("2"))));
-				await().untilAsserted(() -> assertThat(payloads(receivedRetained, "team/score/1"), is(asList("3"))));
+				await().until(() -> payloads(receivedRetained, "team/score/0"), is(asList("2")));
+				await().until(() -> payloads(receivedRetained, "team/score/1"), is(asList("3")));
 			}
 		});
 	}
@@ -251,19 +251,19 @@ class MainTestIT {
 		assertTimeoutPreemptively(timeout, () -> {
 			publishScoresAndShutdown();
 			main.shutdownHook();
-			await().untilAsserted(() -> {
+			await().until(() -> {
 				try (MqttClientForTest thirdClient = new MqttClientForTest(LOCALHOST, brokerPort, "third-client")) {
-					assertThat(thirdClient.getReceived(), is(empty()));
+					return thirdClient.getReceived();
 				}
-			});
+			}, is(empty()));
 		});
 	}
 
 	private void publishScoresAndShutdown() {
 		main.cognition().messages().teamScore(0, 2);
 		main.cognition().messages().teamScore(1, 3);
-		await().until(() -> messagesWithTopic(secondClient.getReceived(), "team/score/0").count() == 1L);
-		await().until(() -> messagesWithTopic(secondClient.getReceived(), "team/score/1").count() == 1L);
+		await().until(() -> messagesWithTopicOf(secondClient, "team/score/0").count(), is(1L));
+		await().until(() -> messagesWithTopicOf(secondClient, "team/score/1").count(), is(1L));
 		haltMain();
 	}
 
@@ -280,13 +280,15 @@ class MainTestIT {
 		secondClient.getReceived().clear();
 		sendReset();
 		publish(provider(anyAmount(), () -> noPosition(currentTimeMillis())));
-		await().untilAsserted(() -> {
-			assertThat(messagesWithTopic(secondClient.getReceived(), "game/start").count(), is(1L));
-		});
+		await().until(() -> messagesWithTopicOf(secondClient, "game/start").count(), is(1L));
 	}
 
 	private int anyAmount() {
 		return 5;
+	}
+
+	private Stream<Message> messagesWithTopicOf(MqttClientForTest mqttClient, String topic) {
+		return messagesWithTopic(mqttClient.getReceived(), topic);
 	}
 
 	private Stream<Message> messagesWithTopic(List<Message> messages, String topic) {
