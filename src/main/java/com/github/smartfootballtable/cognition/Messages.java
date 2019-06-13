@@ -32,7 +32,8 @@ public class Messages {
 	private final Consumer<Message> consumer;
 	private final DistanceUnit distanceUnit;
 
-	private final Set<String> retainedTopics = new HashSet<String>();
+	private final Set<Integer> teamsEverScored = new HashSet<>();
+	private final Set<String> retainedTopics = new HashSet<>();
 
 	public Messages(Consumer<Message> consumer, DistanceUnit distanceUnit) {
 		this.consumer = consumer;
@@ -41,9 +42,11 @@ public class Messages {
 
 	public void gameStart() {
 		publish(message(GAME_START, ""));
-		// TODO do not depend on amount of teams here
-		publishTeamScore(0, 0);
-		publishTeamScore(1, 0);
+		resetScores();
+	}
+
+	private void resetScores() {
+		teamsEverScored.forEach(teamId -> publishTeamScore(teamId, 0));
 	}
 
 	public void pos(AbsolutePosition pos) {
@@ -64,6 +67,7 @@ public class Messages {
 	public void teamScore(int teamid, int score) {
 		publish(message("team/scored", teamid));
 		publishTeamScore(teamid, score);
+		teamsEverScored.add(teamid);
 		gameScore(teamid, score);
 	}
 

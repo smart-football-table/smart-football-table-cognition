@@ -308,7 +308,7 @@ class SFTCognitionTest {
 		givenInputToProcessIs(ball().prepareForLeftGoal().score());
 		whenInputWasProcessed();
 		thenGoalForTeamIsPublished(0);
-		thenPayloadsWithTopicAre("team/score/0", "0", "1");
+		thenPayloadsWithTopicAre("team/score/0", "1");
 	}
 
 	@Test
@@ -318,7 +318,7 @@ class SFTCognitionTest {
 		givenInputToProcessIs(ball().prepareForRightGoal().then().score());
 		whenInputWasProcessed();
 		thenGoalForTeamIsPublished(1);
-		thenPayloadsWithTopicAre("team/score/1", "0", "1");
+		thenPayloadsWithTopicAre("team/score/1", "1");
 	}
 
 	@Test
@@ -349,7 +349,7 @@ class SFTCognitionTest {
 		);
 		whenInputWasProcessed();
 		thenPayloadsWithTopicAre("team/scored", times("0", 3));
-		thenPayloadsWithTopicAre("team/score/0", "0", "1", "2", "3");
+		thenPayloadsWithTopicAre("team/score/0", "1", "2", "3");
 	}
 
 	@Test
@@ -394,7 +394,7 @@ class SFTCognitionTest {
 		givenFrontOfGoalPercentage(20);
 		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(anyCorner()));
 		whenInputWasProcessed();
-		thenPayloadsWithTopicAre("team/score/0", "0", "1", "0");
+		thenPayloadsWithTopicAre("team/score/0", "1", "0");
 	}
 
 	@Test
@@ -403,7 +403,7 @@ class SFTCognitionTest {
 		givenFrontOfGoalPercentage(20);
 		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(pos(0.0, 0.5)).then(anyCorner()));
 		whenInputWasProcessed();
-		thenPayloadsWithTopicAre("team/score/0", "0", "1", "0");
+		thenPayloadsWithTopicAre("team/score/0", "1", "0");
 	}
 
 	@Test
@@ -413,7 +413,7 @@ class SFTCognitionTest {
 		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(anyCorner()).then().prepareForRightGoal()
 				.then().score());
 		whenInputWasProcessed();
-		thenPayloadsWithTopicAre("team/score/1", "0", "1");
+		thenPayloadsWithTopicAre("team/score/1", "1");
 	}
 
 	@Test
@@ -430,7 +430,6 @@ class SFTCognitionTest {
 		);
 		whenInputWasProcessed();
 		assertThat(lastMessageWithTopic("team/score/0").getPayload(), is("6"));
-		assertThat(lastMessageWithTopic("team/score/1").getPayload(), is("0"));
 		thenWinnerAre(0);
 	}
 
@@ -470,7 +469,8 @@ class SFTCognitionTest {
 		);
 		whenInputWasProcessed();
 		assertThat(lastMessageWithTopic("team/score/0").getPayload(), is("6"));
-		assertThat(lastMessageWithTopic("team/score/1").getPayload(), is("0"));
+		thenNoMessageWithTopicIsSent("team/score/1");
+
 		collectedMessages.clear();
 
 		givenInputToProcessIs(ball() //
@@ -489,8 +489,7 @@ class SFTCognitionTest {
 		givenATableOfAnySize();
 		givenInputToProcessIs(ball().at(kickoff()).at(kickoff()));
 		whenInputWasProcessed();
-		assertOneMessageWithPayload(messagesWithTopic("team/score/0"), is("0"));
-		assertOneMessageWithPayload(messagesWithTopic("team/score/1"), is("0"));
+		thenNoMessageIsSent(m -> m.getTopic().startsWith("team/score/"));
 	}
 
 	@Test
@@ -564,8 +563,6 @@ class SFTCognitionTest {
 						.collect(toList()), //
 				is(asList( //
 						message("game/start", ""), //
-						message("team/score/0", 0), //
-						message("team/score/1", 0), //
 						message("team/scored", 0), //
 						message("team/score/0", 1), //
 						message("team/scored", 1), //
@@ -672,7 +669,7 @@ class SFTCognitionTest {
 		// when resetting the game the game/start message is sent immediately as well
 		// when the ball is then detected at the middle line
 		thenPayloadsWithTopicAre("game/start", times("", 2));
-		thenPayloadsWithTopicAre("team/score/1", "0", "0", "1", "2");
+		thenPayloadsWithTopicAre("team/score/1", "1", "2");
 		thenPayloadsWithTopicAre("team/score/0", "0", "0");
 	}
 
