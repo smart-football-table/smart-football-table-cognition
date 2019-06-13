@@ -113,7 +113,7 @@ class DetectionExamples {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_LEFT)).map(Message::getPayload).collect(toList()),
-				is(asList("0", "1")));
+				is(asList("1")));
 	}
 
 	@Property
@@ -130,7 +130,7 @@ class DetectionExamples {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_RIGHT)).map(Message::getPayload).collect(toList()),
-				is(asList("0", "1")));
+				is(asList("1")));
 	}
 
 	@Property
@@ -139,7 +139,7 @@ class DetectionExamples {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_LEFT)).map(Message::getPayload).collect(toList()),
-				is(asList("0", "1", "0")));
+				is(asList("1", "0")));
 	}
 
 	@Property
@@ -148,7 +148,7 @@ class DetectionExamples {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_RIGHT)).map(Message::getPayload).collect(toList()),
-				is(asList("0", "1", "0")));
+				is(asList("1", "0")));
 	}
 
 	@Property
