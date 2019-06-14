@@ -287,7 +287,7 @@ class SFTCognitionTest {
 		givenInputToProcessIs(ball().at(upperLeftCorner()).thenAfter(1, SECONDS).at(lowerRightCorner()));
 		whenInputWasProcessed();
 		assertOneMessageWithPayload(messagesWithTopic("ball/distance/inch"), is("128.06"));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/ipm"), is("7683.75"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/ips"), is("128.06"));
 		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/mph"), is("7.28"));
 	}
 

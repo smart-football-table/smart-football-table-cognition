@@ -2,7 +2,7 @@ package com.github.smartfootballtable.cognition;
 
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.Message.retainedMessage;
-import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.IPM;
+import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.IPS;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.KMH;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPH;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MS;
@@ -11,8 +11,6 @@ import static java.util.stream.Collectors.joining;
 
 import java.text.NumberFormat;
 import java.util.HashSet;
-import java.util.Locale;
-import java.util.Locale.Category;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -74,7 +72,7 @@ public class Messages {
 		this.distanceUnit = distanceUnit;
 		this.velocityPublisher = distanceUnit.isMetric() //
 				? new VelocityPublisher(MS, KMH) //
-				: new VelocityPublisher(IPM, MPH);
+				: new VelocityPublisher(IPS, MPH);
 	}
 
 	public void gameStart() {
