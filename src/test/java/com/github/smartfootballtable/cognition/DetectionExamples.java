@@ -80,9 +80,11 @@ import net.jqwik.api.arbitraries.SizableArbitrary;
 @Tag("pbt")
 class DetectionExamples {
 
+	private static final String METRIC_TABLE = "table";
+
 	@Property
 	void ballOnTableNeverWillRaiseTeamScoreOrTeamsScoredEvents(
-			@ForAll("positionsOnTable") List<RelativePosition> positions, @ForAll("table") Table table) {
+			@ForAll("positionsOnTable") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(process(positions, table) //
 				.filter(anyOf(TEAM_SCORE_LEFT, TEAM_SCORE_RIGHT, TEAM_SCORED)) //
@@ -101,7 +103,7 @@ class DetectionExamples {
 
 	@Property
 	void leftGoalProducesTeamScoredMessage(@ForAll("goalSituationsLeft") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(process(positions, table).filter(topicIs(TEAM_SCORED)).map(Message::getPayload).collect(toList()),
 				is(asList(TEAM_ID_LEFT)));
@@ -109,7 +111,7 @@ class DetectionExamples {
 
 	@Property
 	void leftGoalsProducesTeamScoreMessage(@ForAll("goalSituationsLeft") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_LEFT)).map(Message::getPayload).collect(toList()),
@@ -118,7 +120,7 @@ class DetectionExamples {
 
 	@Property
 	void rightGoalProducesTeamScoredMessage(@ForAll("goalSituationsRight") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(process(positions, table).filter(topicIs(TEAM_SCORED)).map(Message::getPayload).collect(toList()),
 				is(asList(TEAM_ID_RIGHT)));
@@ -126,7 +128,7 @@ class DetectionExamples {
 
 	@Property
 	void rightGoalProducesTeamScoreMessage(@ForAll("goalSituationsRight") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_RIGHT)).map(Message::getPayload).collect(toList()),
@@ -135,7 +137,7 @@ class DetectionExamples {
 
 	@Property
 	void whenBallIsDetectedInAnyCornerAfterALeftHandGoalTheGoalGetsRever(
-			@ForAll("leftGoalsToReverse") List<RelativePosition> positions, @ForAll("table") Table table) {
+			@ForAll("leftGoalsToReverse") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_LEFT)).map(Message::getPayload).collect(toList()),
@@ -144,7 +146,7 @@ class DetectionExamples {
 
 	@Property
 	void whenBallIsDetectedInAnyCornerAfterARightHandGoalTheGoalGetsReverted(
-			@ForAll("rightGoalsToReverse") List<RelativePosition> positions, @ForAll("table") Table table) {
+			@ForAll("rightGoalsToReverse") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(TEAM_SCORE_RIGHT)).map(Message::getPayload).collect(toList()),
@@ -153,7 +155,7 @@ class DetectionExamples {
 
 	@Property
 	void whenBallDoesNotMoveForMoreThanOneMinuteTheGameGoesToIdleMode(
-			@ForAll("idleWhereBallMaybeGone") List<RelativePosition> positions, @ForAll("table") Table table) {
+			@ForAll("idleWhereBallMaybeGone") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(process(positions, table).filter(topicIs(GAME_IDLE).and(payloadIs("true"))).count(), is(1L));
 	}
@@ -164,7 +166,7 @@ class DetectionExamples {
 
 	@Property(shrinking = ShrinkingMode.OFF, afterFailure = AfterFailureMode.SAMPLE_ONLY)
 	// TODO could produce falls positives: random data could contain fouls
-	void noIdleWithoutFoul(@ForAll("idle") List<RelativePosition> positions, @ForAll("table") Table table) {
+	void noIdleWithoutFoul(@ForAll("idle") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		List<Message> messages = process(positions, table).collect(toList());
 		Map<String, Long> counts = new HashMap<>();
@@ -176,7 +178,7 @@ class DetectionExamples {
 
 	@Property
 	void allRelPositionAreBetween0And1(@ForAll("positionsOnTable") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(BALL_POSITION_REL)).map(Message::getPayload).collect(toList()),
@@ -186,14 +188,14 @@ class DetectionExamples {
 
 	@Property
 	boolean ballPositionAbsForEveryPosition(@ForAll("positionsOnTable") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		return process(positions, table).filter(topicIs(BALL_POSITION_ABS)).count() == positions.size();
 	}
 
 	@Property(shrinking = ShrinkingMode.OFF, afterFailure = AfterFailureMode.SAMPLE_ONLY)
 	void allAbsPositionAreBetween0AndTableSize(@ForAll("positionsOnTable") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(
 				process(positions, table).filter(topicIs(BALL_POSITION_ABS)).map(Message::getPayload).collect(toList()),
@@ -204,14 +206,14 @@ class DetectionExamples {
 
 	@Property
 	boolean ballVelocityKmhForEveryPositionChange(@ForAll("positionsOnTable") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		return process(positions, table).filter(topicIs(BALL_VELOCITY_KMH)).count() == positions.size() - 1;
 	}
 
 	@Property
 	void allBallPositionVelocitiesArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(process(positions, table).filter(topicIs(BALL_VELOCITY_KMH)).map(Message::getPayload)
 				.map(Double::parseDouble).collect(toList()), everyItem(is(positive())));
@@ -219,14 +221,14 @@ class DetectionExamples {
 
 	@Property
 	boolean ballVelocityMpsForEveryPositionChange(@ForAll("positionsOnTable") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		return process(positions, table).filter(topicIs(BALL_VELOCITY_MPS)).count() == positions.size() - 1;
 	}
 
 	@Property
 	void ballVelocityMpsForArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(process(positions, table).filter(topicIs(BALL_VELOCITY_MPS)).map(Message::getPayload)
 				.map(Double::parseDouble).collect(toList()), everyItem(is(positive())));
@@ -234,7 +236,7 @@ class DetectionExamples {
 
 	@Property
 	void ballDistanceForArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(process(positions, table).filter(topicIs(BALL_DISTANCE_CM)).map(Message::getPayload)
 				.map(Double::parseDouble).collect(toList()), everyItem(is(positive())));
@@ -242,7 +244,7 @@ class DetectionExamples {
 
 	@Property
 	void forEachOverallDistanceThereIsASingleDistance(@ForAll("positionsOnTable") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		List<Message> processed = process(positions, table).collect(toList());
 		assertThat(processed.stream().filter(topicIs(BALL_OVERALL_DISTANCE_CM)).count(),
@@ -251,7 +253,7 @@ class DetectionExamples {
 
 	@Property
 	void overallDistanceIsSumOfSingleDistances(@ForAll("positionsOnTable") List<RelativePosition> positions,
-			@ForAll("table") Table table) {
+			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		List<Message> processed = process(positions, table).collect(toList());
 		OfDouble singles = doublePayload(processed, topicIs(BALL_DISTANCE_CM)).iterator();
@@ -319,8 +321,8 @@ class DetectionExamples {
 		return greaterThanOrEqualTo(0.0);
 	}
 
-	@Provide
-	Arbitrary<Table> table() {
+	@Provide(METRIC_TABLE)
+	Arbitrary<Table> metricTable() {
 		return combine( //
 				integers().greaterOrEqual(1), //
 				integers().greaterOrEqual(1)) //

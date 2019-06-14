@@ -2,7 +2,11 @@ package com.github.smartfootballtable.cognition;
 
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.Message.retainedMessage;
+import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
+import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.INCHES;
+import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.IPM;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.KMH;
+import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPH;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPS;
 import static java.util.stream.Collectors.joining;
 
@@ -18,6 +22,7 @@ import com.github.smartfootballtable.cognition.data.position.AbsolutePosition;
 import com.github.smartfootballtable.cognition.data.position.Position;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.data.unit.DistanceUnit;
+import com.github.smartfootballtable.cognition.data.unit.SpeedUnit;
 
 public class Messages {
 
@@ -59,9 +64,19 @@ public class Messages {
 
 	public void movement(Movement movement, Distance overallDistance) {
 		publish(message("ball/distance/" + distanceUnit.symbol(), movement.distance(distanceUnit)));
-		publish(message("ball/velocity/mps", movement.velocity(MPS)));
-		publish(message("ball/velocity/kmh", movement.velocity(KMH)));
+		if (distanceUnit == CENTIMETER) {
+			publishMovement(movement, new SpeedUnit[] { MPS, KMH });
+		}
+		if (distanceUnit == INCHES) {
+			publishMovement(movement, new SpeedUnit[] { IPM, MPH });
+		}
 		publish(message("ball/distance/overall/" + distanceUnit.symbol(), overallDistance.value(distanceUnit)));
+	}
+
+	private void publishMovement(Movement movement, SpeedUnit[] units) {
+		for (SpeedUnit unit : units) {
+			publish(message("ball/velocity/" + unit.name().toLowerCase(), movement.velocity(unit)));
+		}
 	}
 
 	public void teamScore(int teamid, int score) {

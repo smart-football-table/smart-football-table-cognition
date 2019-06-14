@@ -1,6 +1,7 @@
 package com.github.smartfootballtable.cognition.data;
 
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
+import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPS;
 
 import java.util.concurrent.TimeUnit;
 
@@ -8,6 +9,7 @@ import com.github.smartfootballtable.cognition.data.unit.SpeedUnit;
 
 public class Velocity {
 
+	private final SpeedUnit source = MPS;
 	private final double metersPerSecond;
 
 	public Velocity(Distance distance, long duration, TimeUnit timeUnit) {
@@ -18,8 +20,8 @@ public class Velocity {
 		return 10 * distance.value(CENTIMETER) / timeUnit.toMillis(duration);
 	}
 
-	public double value(SpeedUnit speedUnit) {
-		return speedUnit.toMps(metersPerSecond);
+	public double value(SpeedUnit target) {
+		return source.convertTo(target, metersPerSecond);
 	}
 
 }
