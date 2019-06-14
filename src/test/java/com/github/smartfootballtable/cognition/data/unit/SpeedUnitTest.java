@@ -30,7 +30,7 @@ class SpeedUnitTest {
 	}
 
 	@Test
-	void canConvertIpm() {
+	void canConvertIps() {
 		SpeedUnit source = IPS;
 		assertThat(source.convertTo(KMH, 1), closeTo(0.09144, 0.0001));
 		assertThat(source.convertTo(MS, 1), closeTo(0.0253998, 0.001));
