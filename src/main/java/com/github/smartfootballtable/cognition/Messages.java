@@ -28,7 +28,7 @@ public class Messages {
 
 		private final SpeedUnit[] units;
 
-		public VelocityPublisher(SpeedUnit... units) {
+		private VelocityPublisher(SpeedUnit... units) {
 			this.units = units.clone();
 		}
 

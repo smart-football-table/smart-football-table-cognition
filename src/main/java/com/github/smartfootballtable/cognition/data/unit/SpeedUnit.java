@@ -18,6 +18,7 @@ public final class SpeedUnit {
 	public static final SpeedUnit KMH = new SpeedUnit(KILOMETERS, HOURS, "kmh");
 	public static final SpeedUnit IPM = new SpeedUnit(INCHES, MINUTES, "ipm");
 	public static final SpeedUnit MPH = new SpeedUnit(MILES, HOURS, "mph");
+	private static final SpeedUnit[] speedUnits = new SpeedUnit[] { MPS, KMH, IPM, MPH };
 
 	private final DistanceUnit distanceUnit;
 	private final TimeUnit timeUnit;
@@ -45,6 +46,15 @@ public final class SpeedUnit {
 		return source.timeUnit.compareTo(timeUnit) < 0 //
 				? 1.0 / source.timeUnit.convert(1, timeUnit) //
 				: timeUnit.convert(1, source.timeUnit);
+	}
+
+	public static SpeedUnit get(DistanceUnit distanceUnit, TimeUnit timeUnit) {
+		for (SpeedUnit unit : speedUnits) {
+			if (unit.distanceUnit == distanceUnit && unit.timeUnit == timeUnit) {
+				return unit;
+			}
+		}
+		return new SpeedUnit(distanceUnit, timeUnit, "internal");
 	}
 
 	@Generated

@@ -278,7 +278,7 @@ class SFTCognitionTest {
 		whenInputWasProcessed();
 		assertOneMessageWithPayload(messagesWithTopic("ball/distance/cm"), is("128.06248474865697"));
 		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/mps"), is("1.2806248474865698"));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/kmh"), is("4.610249450951652"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/kmh"), is("4.610249450951651"));
 	}
 
 	@Test
@@ -288,7 +288,7 @@ class SFTCognitionTest {
 		whenInputWasProcessed();
 		assertOneMessageWithPayload(messagesWithTopic("ball/distance/inch"), is("128.06248474865697"));
 		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/ipm"), is("7683.749084919418"));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/mph"), is("7.2762775425373265"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/mph"), is("7.276277542537328"));
 	}
 
 	@Test
