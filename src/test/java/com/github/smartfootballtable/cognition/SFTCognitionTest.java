@@ -272,35 +272,35 @@ class SFTCognitionTest {
 	}
 
 	@Test
-	void whenTwoPositionsAreRead_VelocityGetsPublished() throws IOException {
+	void whenTwoPositionsAreRead_VelocityGetsPublished_MetricTable() throws IOException {
 		givenATableOfSize(100, 80, CENTIMETER);
 		givenInputToProcessIs(ball().at(upperLeftCorner()).thenAfter(1, SECONDS).at(lowerRightCorner()));
 		whenInputWasProcessed();
-		assertOneMessageWithPayload(messagesWithTopic("ball/distance/cm"), is("128.06248474865697"));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/mps"), is("1.2806248474865698"));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/kmh"), is("4.610249450951651"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/distance/cm"), is("128.06"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/ms"), is("1.28"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/kmh"), is("4.61"));
 	}
 
 	@Test
-	void whenTwoPositionsAreRead_VelocityGetsPublished_tableInInch() throws IOException {
+	void whenTwoPositionsAreRead_VelocityGetsPublished_ImperialTable() throws IOException {
 		givenATableOfSize(100, 80, INCHES);
 		givenInputToProcessIs(ball().at(upperLeftCorner()).thenAfter(1, SECONDS).at(lowerRightCorner()));
 		whenInputWasProcessed();
-		assertOneMessageWithPayload(messagesWithTopic("ball/distance/inch"), is("128.06248474865697"));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/ipm"), is("7683.749084919418"));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/mph"), is("7.276277542537328"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/distance/inch"), is("128.06"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/ipm"), is("7683.75"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/mph"), is("7.28"));
 	}
 
 	@Test
 	void overallDistance() throws IOException {
 		makeDiamondMoveOnTableIn(CENTIMETER);
-		thenPayloadsWithTopicAre("ball/distance/overall/cm", "8.0", "18.0", "26.0", "36.0");
+		thenPayloadsWithTopicAre("ball/distance/overall/cm", "8.00", "18.00", "26.00", "36.00");
 	}
 
 	@Test
-	void overallDistanceIsSentInInchWhenTableIsInch() throws IOException {
+	void overallDistanceIsSentInInchWhenTableIsImperial() throws IOException {
 		makeDiamondMoveOnTableIn(INCHES);
-		thenPayloadsWithTopicAre("ball/distance/overall/inch", "8.0", "18.0", "26.0", "36.0");
+		thenPayloadsWithTopicAre("ball/distance/overall/inch", "8.00", "18.00", "26.00", "36.00");
 	}
 
 	private void makeDiamondMoveOnTableIn(DistanceUnit distanceUnit) throws IOException {

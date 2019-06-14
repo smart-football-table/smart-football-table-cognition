@@ -14,11 +14,11 @@ import lombok.Generated;
 
 public final class SpeedUnit {
 
-	public static final SpeedUnit MPS = new SpeedUnit(METERS, SECONDS, "mps");
+	public static final SpeedUnit MS = new SpeedUnit(METERS, SECONDS, "ms");
 	public static final SpeedUnit KMH = new SpeedUnit(KILOMETERS, HOURS, "kmh");
 	public static final SpeedUnit IPM = new SpeedUnit(INCHES, MINUTES, "ipm");
 	public static final SpeedUnit MPH = new SpeedUnit(MILES, HOURS, "mph");
-	private static final SpeedUnit[] speedUnits = new SpeedUnit[] { MPS, KMH, IPM, MPH };
+	private static final SpeedUnit[] speedUnits = new SpeedUnit[] { MS, KMH, IPM, MPH };
 
 	private final DistanceUnit distanceUnit;
 	private final TimeUnit timeUnit;

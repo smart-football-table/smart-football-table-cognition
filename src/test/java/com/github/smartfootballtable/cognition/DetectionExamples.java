@@ -7,7 +7,7 @@ import static com.github.smartfootballtable.cognition.Topic.BALL_OVERALL_DISTANC
 import static com.github.smartfootballtable.cognition.Topic.BALL_POSITION_ABS;
 import static com.github.smartfootballtable.cognition.Topic.BALL_POSITION_REL;
 import static com.github.smartfootballtable.cognition.Topic.BALL_VELOCITY_KMH;
-import static com.github.smartfootballtable.cognition.Topic.BALL_VELOCITY_MPS;
+import static com.github.smartfootballtable.cognition.Topic.BALL_VELOCITY_MS;
 import static com.github.smartfootballtable.cognition.Topic.GAME_FOUL;
 import static com.github.smartfootballtable.cognition.Topic.GAME_IDLE;
 import static com.github.smartfootballtable.cognition.Topic.TEAM_ID_LEFT;
@@ -32,6 +32,7 @@ import static net.jqwik.api.Arbitraries.longs;
 import static net.jqwik.api.Combinators.combine;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.core.Every.everyItem;
@@ -220,17 +221,17 @@ class DetectionExamples {
 	}
 
 	@Property
-	boolean ballVelocityMpsForEveryPositionChange(@ForAll("positionsOnTable") List<RelativePosition> positions,
+	boolean ballVelocityMsForEveryPositionChange(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		return process(positions, table).filter(topicIs(BALL_VELOCITY_MPS)).count() == positions.size() - 1;
+		return process(positions, table).filter(topicIs(BALL_VELOCITY_MS)).count() == positions.size() - 1;
 	}
 
 	@Property
-	void ballVelocityMpsForArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
+	void ballVelocityMsForArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(process(positions, table).filter(topicIs(BALL_VELOCITY_MPS)).map(Message::getPayload)
+		assertThat(process(positions, table).filter(topicIs(BALL_VELOCITY_MS)).map(Message::getPayload)
 				.map(Double::parseDouble).collect(toList()), everyItem(is(positive())));
 	}
 
@@ -260,8 +261,10 @@ class DetectionExamples {
 		OfDouble overalls = doublePayload(processed, topicIs(BALL_OVERALL_DISTANCE_CM)).iterator();
 
 		double sum = 0.0;
+		int count = 0;
 		while (singles.hasNext() && overalls.hasNext()) {
-			assertThat(overalls.nextDouble(), is(sum += singles.nextDouble()));
+			count++;
+			assertThat(overalls.nextDouble(), is(closeTo(sum += singles.nextDouble(), 0.01 * count)));
 		}
 		assertThat(singles.hasNext(), is(overalls.hasNext()));
 	}

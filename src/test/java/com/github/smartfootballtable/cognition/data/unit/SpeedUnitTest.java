@@ -15,16 +15,16 @@ class SpeedUnitTest {
 	void canConvertKmh() {
 		SpeedUnit source = KMH;
 		assertThat(source.convertTo(KMH, 1), is(1.0));
-		assertThat(source.convertTo(MPS, 1), closeTo(0.277778, 0.001));
+		assertThat(source.convertTo(MS, 1), closeTo(0.277778, 0.001));
 		assertThat(source.convertTo(IPM, 1), closeTo(656.1679, 0.001));
 		assertThat(source.convertTo(MPH, 1), closeTo(0.621371, 0.001));
 	}
 
 	@Test
-	void canConvertMps() {
-		SpeedUnit source = MPS;
+	void canConvertMs() {
+		SpeedUnit source = MS;
 		assertThat(source.convertTo(KMH, 1), is(3.6));
-		assertThat(source.convertTo(MPS, 1), is(1.0));
+		assertThat(source.convertTo(MS, 1), is(1.0));
 		assertThat(source.convertTo(IPM, 1), closeTo(2362.2047, 0.001));
 		assertThat(source.convertTo(MPH, 1), closeTo(2.23694, 0.001));
 	}
@@ -33,7 +33,7 @@ class SpeedUnitTest {
 	void canConvertIpm() {
 		SpeedUnit source = IPM;
 		assertThat(source.convertTo(KMH, 1), closeTo(0.0015240000000000002, 0.0001));
-		assertThat(source.convertTo(MPS, 1), closeTo(0.00042333, 0.001));
+		assertThat(source.convertTo(MS, 1), closeTo(0.00042333, 0.001));
 		assertThat(source.convertTo(IPM, 1), is(1.0));
 		assertThat(source.convertTo(MPH, 1), closeTo(0.00095699, 0.001));
 	}
@@ -42,7 +42,7 @@ class SpeedUnitTest {
 	void canConvertMph() {
 		SpeedUnit source = MPH;
 		assertThat(source.convertTo(KMH, 1), closeTo(1.6093, 0.001));
-		assertThat(source.convertTo(MPS, 1), closeTo(0.4470, 0.001));
+		assertThat(source.convertTo(MS, 1), closeTo(0.4470, 0.001));
 		assertThat(source.convertTo(IPM, 1), is(1056.0));
 		assertThat(source.convertTo(MPH, 1), is(1.0));
 	}

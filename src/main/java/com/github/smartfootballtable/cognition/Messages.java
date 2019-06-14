@@ -5,10 +5,14 @@ import static com.github.smartfootballtable.cognition.data.Message.retainedMessa
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.IPM;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.KMH;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPH;
-import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPS;
+import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MS;
+import static java.util.Locale.US;
 import static java.util.stream.Collectors.joining;
 
+import java.text.NumberFormat;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.Locale.Category;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -34,7 +38,7 @@ public class Messages {
 
 		public void publishMovement(Movement movement) {
 			for (SpeedUnit unit : units) {
-				Messages.this.publish(message("ball/velocity/" + unit.symbol(), movement.velocity(unit)));
+				Messages.this.publish(message("ball/velocity/" + unit.symbol(), formatDouble(movement.velocity(unit))));
 			}
 		}
 
@@ -55,11 +59,21 @@ public class Messages {
 	private final Set<Integer> teamsEverScored = new HashSet<>();
 	private final Set<String> retainedTopics = new HashSet<>();
 
+	private final NumberFormat formatter = createDoubleFormatter();
+
+	private static NumberFormat createDoubleFormatter() {
+		NumberFormat formatter = NumberFormat.getInstance(US);
+		formatter.setMaximumFractionDigits(2);
+		formatter.setMinimumFractionDigits(2);
+		formatter.setGroupingUsed(false);
+		return formatter;
+	}
+
 	public Messages(Consumer<Message> consumer, DistanceUnit distanceUnit) {
 		this.consumer = consumer;
 		this.distanceUnit = distanceUnit;
 		this.velocityPublisher = distanceUnit.isMetric() //
-				? new VelocityPublisher(MPS, KMH) //
+				? new VelocityPublisher(MS, KMH) //
 				: new VelocityPublisher(IPM, MPH);
 	}
 
@@ -81,9 +95,14 @@ public class Messages {
 	}
 
 	public void movement(Movement movement, Distance overallDistance) {
-		publish(message("ball/distance/" + distanceUnit.symbol(), movement.distance(distanceUnit)));
+		publish(message("ball/distance/" + distanceUnit.symbol(), formatDouble(movement.distance(distanceUnit))));
 		velocityPublisher.publishMovement(movement);
-		publish(message("ball/distance/overall/" + distanceUnit.symbol(), overallDistance.value(distanceUnit)));
+		publish(message("ball/distance/overall/" + distanceUnit.symbol(),
+				formatDouble(overallDistance.value(distanceUnit))));
+	}
+
+	private String formatDouble(double number) {
+		return formatter.format(number);
 	}
 
 	public void teamScore(int teamid, int score) {

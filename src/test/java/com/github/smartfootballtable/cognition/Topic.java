@@ -11,7 +11,7 @@ public enum Topic {
 	BALL_DISTANCE_CM(topicStartsWith("ball/distance/cm")), //
 	BALL_OVERALL_DISTANCE_CM(topicStartsWith("ball/distance/overall/cm")), //
 	BALL_VELOCITY_KMH(topicStartsWith("ball/velocity/kmh")), //
-	BALL_VELOCITY_MPS(topicStartsWith("ball/velocity/mps")), //
+	BALL_VELOCITY_MS(topicStartsWith("ball/velocity/ms")), //
 	GAME_START(topicStartsWith("game/start")), //
 	GAME_FOUL(topicStartsWith("game/foul")), //
 	GAME_IDLE(topicStartsWith("game/idle")), //
