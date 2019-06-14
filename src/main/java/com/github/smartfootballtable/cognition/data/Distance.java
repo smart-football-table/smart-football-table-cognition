@@ -15,7 +15,7 @@ public class Distance {
 	}
 
 	public double value(DistanceUnit target) {
-		return distanceUnit.convert(value, target);
+		return target.convert(value, distanceUnit);
 	}
 
 	public DistanceUnit unit() {

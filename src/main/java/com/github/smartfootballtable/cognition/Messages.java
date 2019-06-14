@@ -2,7 +2,9 @@ package com.github.smartfootballtable.cognition;
 
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.Message.retainedMessage;
+import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.IPM;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.KMH;
+import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPH;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPS;
 import static java.util.stream.Collectors.joining;
 
@@ -18,8 +20,25 @@ import com.github.smartfootballtable.cognition.data.position.AbsolutePosition;
 import com.github.smartfootballtable.cognition.data.position.Position;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.data.unit.DistanceUnit;
+import com.github.smartfootballtable.cognition.data.unit.SpeedUnit;
 
 public class Messages {
+
+	private final class VelocityPublisher {
+
+		private final SpeedUnit[] units;
+
+		private VelocityPublisher(SpeedUnit... units) {
+			this.units = units.clone();
+		}
+
+		public void publishMovement(Movement movement) {
+			for (SpeedUnit unit : units) {
+				Messages.this.publish(message("ball/velocity/" + unit.symbol(), movement.velocity(unit)));
+			}
+		}
+
+	}
 
 	private static final String GAME_START = "game/start";
 	private static final String GAME_GAMEOVER = "game/gameover";
@@ -31,6 +50,7 @@ public class Messages {
 
 	private final Consumer<Message> consumer;
 	private final DistanceUnit distanceUnit;
+	private final VelocityPublisher velocityPublisher;
 
 	private final Set<Integer> teamsEverScored = new HashSet<>();
 	private final Set<String> retainedTopics = new HashSet<>();
@@ -38,6 +58,9 @@ public class Messages {
 	public Messages(Consumer<Message> consumer, DistanceUnit distanceUnit) {
 		this.consumer = consumer;
 		this.distanceUnit = distanceUnit;
+		this.velocityPublisher = distanceUnit.isMetric() //
+				? new VelocityPublisher(MPS, KMH) //
+				: new VelocityPublisher(IPM, MPH);
 	}
 
 	public void gameStart() {
@@ -59,8 +82,7 @@ public class Messages {
 
 	public void movement(Movement movement, Distance overallDistance) {
 		publish(message("ball/distance/" + distanceUnit.symbol(), movement.distance(distanceUnit)));
-		publish(message("ball/velocity/mps", movement.velocity(MPS)));
-		publish(message("ball/velocity/kmh", movement.velocity(KMH)));
+		velocityPublisher.publishMovement(movement);
 		publish(message("ball/distance/overall/" + distanceUnit.symbol(), overallDistance.value(distanceUnit)));
 	}
 

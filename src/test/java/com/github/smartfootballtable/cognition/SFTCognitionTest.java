@@ -11,7 +11,7 @@ import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuil
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.create;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
-import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.INCH;
+import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.INCHES;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -276,9 +276,19 @@ class SFTCognitionTest {
 		givenATableOfSize(100, 80, CENTIMETER);
 		givenInputToProcessIs(ball().at(upperLeftCorner()).thenAfter(1, SECONDS).at(lowerRightCorner()));
 		whenInputWasProcessed();
-		assertOneMessageWithPayload(messagesWithTopic("ball/distance/cm"), is(String.valueOf(128.06248474865697)));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/mps"), is(String.valueOf(1.2806248474865697)));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/kmh"), is(String.valueOf(4.610249450951652)));
+		assertOneMessageWithPayload(messagesWithTopic("ball/distance/cm"), is("128.06248474865697"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/mps"), is("1.2806248474865698"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/kmh"), is("4.610249450951651"));
+	}
+
+	@Test
+	void whenTwoPositionsAreRead_VelocityGetsPublished_tableInInch() throws IOException {
+		givenATableOfSize(100, 80, INCHES);
+		givenInputToProcessIs(ball().at(upperLeftCorner()).thenAfter(1, SECONDS).at(lowerRightCorner()));
+		whenInputWasProcessed();
+		assertOneMessageWithPayload(messagesWithTopic("ball/distance/inch"), is("128.06248474865697"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/ipm"), is("7683.749084919418"));
+		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/mph"), is("7.276277542537328"));
 	}
 
 	@Test
@@ -289,7 +299,7 @@ class SFTCognitionTest {
 
 	@Test
 	void overallDistanceIsSentInInchWhenTableIsInch() throws IOException {
-		makeDiamondMoveOnTableIn(INCH);
+		makeDiamondMoveOnTableIn(INCHES);
 		thenPayloadsWithTopicAre("ball/distance/overall/inch", "8.0", "18.0", "26.0", "36.0");
 	}
 
