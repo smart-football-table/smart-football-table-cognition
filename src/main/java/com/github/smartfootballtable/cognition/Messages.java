@@ -2,8 +2,6 @@ package com.github.smartfootballtable.cognition;
 
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.Message.retainedMessage;
-import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
-import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.INCHES;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.IPM;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.KMH;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPH;
@@ -26,6 +24,22 @@ import com.github.smartfootballtable.cognition.data.unit.SpeedUnit;
 
 public class Messages {
 
+	private final class VelocityPublisher {
+
+		private final SpeedUnit[] units;
+
+		public VelocityPublisher(SpeedUnit... units) {
+			this.units = units.clone();
+		}
+
+		public void publishMovement(Movement movement) {
+			for (SpeedUnit unit : units) {
+				Messages.this.publish(message("ball/velocity/" + unit.symbol(), movement.velocity(unit)));
+			}
+		}
+
+	}
+
 	private static final String GAME_START = "game/start";
 	private static final String GAME_GAMEOVER = "game/gameover";
 	private static final String GAME_IDLE = "game/idle";
@@ -36,6 +50,7 @@ public class Messages {
 
 	private final Consumer<Message> consumer;
 	private final DistanceUnit distanceUnit;
+	private final VelocityPublisher velocityPublisher;
 
 	private final Set<Integer> teamsEverScored = new HashSet<>();
 	private final Set<String> retainedTopics = new HashSet<>();
@@ -43,6 +58,9 @@ public class Messages {
 	public Messages(Consumer<Message> consumer, DistanceUnit distanceUnit) {
 		this.consumer = consumer;
 		this.distanceUnit = distanceUnit;
+		this.velocityPublisher = distanceUnit.isMetric() //
+				? new VelocityPublisher(MPS, KMH) //
+				: new VelocityPublisher(IPM, MPH);
 	}
 
 	public void gameStart() {
@@ -64,19 +82,8 @@ public class Messages {
 
 	public void movement(Movement movement, Distance overallDistance) {
 		publish(message("ball/distance/" + distanceUnit.symbol(), movement.distance(distanceUnit)));
-		if (distanceUnit == CENTIMETER) {
-			publishMovement(movement, new SpeedUnit[] { MPS, KMH });
-		}
-		if (distanceUnit == INCHES) {
-			publishMovement(movement, new SpeedUnit[] { IPM, MPH });
-		}
+		velocityPublisher.publishMovement(movement);
 		publish(message("ball/distance/overall/" + distanceUnit.symbol(), overallDistance.value(distanceUnit)));
-	}
-
-	private void publishMovement(Movement movement, SpeedUnit[] units) {
-		for (SpeedUnit unit : units) {
-			publish(message("ball/velocity/" + unit.name().toLowerCase(), movement.velocity(unit)));
-		}
 	}
 
 	public void teamScore(int teamid, int score) {

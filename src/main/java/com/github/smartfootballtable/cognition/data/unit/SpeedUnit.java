@@ -10,30 +10,47 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.concurrent.TimeUnit;
 
-public enum SpeedUnit {
+import lombok.Generated;
 
-	MPS(METERS, SECONDS), KMH(KILOMETERS, HOURS), IPM(INCHES, MINUTES), MPH(MILES, HOURS);
+public final class SpeedUnit {
+
+	public static final SpeedUnit MPS = new SpeedUnit(METERS, SECONDS, "mps");
+	public static final SpeedUnit KMH = new SpeedUnit(KILOMETERS, HOURS, "kmh");
+	public static final SpeedUnit IPM = new SpeedUnit(INCHES, MINUTES, "ipm");
+	public static final SpeedUnit MPH = new SpeedUnit(MILES, HOURS, "mph");
 
 	private final DistanceUnit distanceUnit;
 	private final TimeUnit timeUnit;
+	private final String symbol;
 
-	private SpeedUnit(DistanceUnit distanceUnit, TimeUnit timeUnit) {
+	public SpeedUnit(DistanceUnit distanceUnit, TimeUnit timeUnit, String symbol) {
 		this.distanceUnit = distanceUnit;
 		this.timeUnit = timeUnit;
+		this.symbol = symbol;
 	}
 
-	public double convertTo(SpeedUnit target, double value) {
-		return value * (convertDistance(target) / convertTime(target));
+	public String symbol() {
+		return symbol;
 	}
 
-	private double convertDistance(SpeedUnit target) {
-		return target.distanceUnit.convert(1, distanceUnit);
+	public double convertTo(SpeedUnit source, double value) {
+		return value * (convertTime(source) / convertDistance(source));
 	}
 
-	private double convertTime(SpeedUnit target) {
-		return target.timeUnit.compareTo(timeUnit) > 0 //
-				? 1D / timeUnit.convert(1, target.timeUnit) //
-				: target.timeUnit.convert(1, timeUnit);
+	private double convertDistance(SpeedUnit source) {
+		return distanceUnit.convert(1, source.distanceUnit);
+	}
+
+	private double convertTime(SpeedUnit source) {
+		return source.timeUnit.compareTo(timeUnit) < 0 //
+				? 1.0 / source.timeUnit.convert(1, timeUnit) //
+				: timeUnit.convert(1, source.timeUnit);
+	}
+
+	@Generated
+	@Override
+	public String toString() {
+		return "SpeedUnit [distanceUnit=" + distanceUnit + ", timeUnit=" + timeUnit + ", symbol=" + symbol + "]";
 	}
 
 }

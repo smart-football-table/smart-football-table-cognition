@@ -9,6 +9,11 @@ public enum DistanceUnit {
 		}
 
 		@Override
+		public boolean isMetric() {
+			return true;
+		}
+
+		@Override
 		public double toCentimeters(double value) {
 			return value;
 		}
@@ -42,6 +47,11 @@ public enum DistanceUnit {
 		@Override
 		public String symbol() {
 			return "m";
+		}
+
+		@Override
+		public boolean isMetric() {
+			return true;
 		}
 
 		@Override
@@ -81,6 +91,11 @@ public enum DistanceUnit {
 		}
 
 		@Override
+		public boolean isMetric() {
+			return true;
+		}
+
+		@Override
 		public double toCentimeters(double value) {
 			return toMeters(value) * 100;
 		}
@@ -114,6 +129,11 @@ public enum DistanceUnit {
 		@Override
 		public String symbol() {
 			return "inch";
+		}
+
+		@Override
+		public boolean isMetric() {
+			return false;
 		}
 
 		@Override
@@ -153,6 +173,11 @@ public enum DistanceUnit {
 		}
 
 		@Override
+		public boolean isMetric() {
+			return false;
+		}
+
+		@Override
 		public double toCentimeters(double value) {
 			return toMeters(value) * 100;
 		}
@@ -182,6 +207,8 @@ public enum DistanceUnit {
 			return source.toMiles(value);
 		}
 	};
+
+	public abstract boolean isMetric();
 
 	public abstract String symbol();
 
