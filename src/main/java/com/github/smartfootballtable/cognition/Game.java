@@ -25,6 +25,15 @@ public abstract class Game {
 
 	private static class DefaultScoreTracker implements ScoreTracker {
 
+		private enum ScoreChange {
+			SCORED(+1), REVERTED(-1);
+			private final int changeBy;
+
+			private ScoreChange(int changeBy) {
+				this.changeBy = changeBy;
+			}
+		}
+
 		private static final int MAX_BALLS = 10;
 
 		private final ScoreTracker.Listener listener;
@@ -37,18 +46,19 @@ public abstract class Game {
 
 		@Override
 		public int teamScored(int teamid) {
-			return changeScore(teamid, +1);
+			return changeScore(teamid, ScoreChange.SCORED);
 		}
 
 		@Override
 		public int revertGoal(int teamid) {
-			return changeScore(teamid, -1);
+			return changeScore(teamid, ScoreChange.REVERTED);
 		}
 
-		private int changeScore(int teamid, int d) {
-			Integer newScore = score(teamid) + d;
+		private int changeScore(int teamid, ScoreChange change) {
+			int oldScore = scoreOf(teamid);
+			Integer newScore = oldScore + change.changeBy;
 			scores.put(teamid, newScore);
-			listener.teamScored(teamid, newScore);
+			listener.scoreChanged(teamid, oldScore, newScore);
 			checkState(teamid, newScore);
 			return newScore;
 		}
@@ -61,7 +71,7 @@ public abstract class Game {
 			}
 		}
 
-		private Integer score(int teamid) {
+		private int scoreOf(int teamid) {
 			return scores.getOrDefault(teamid, 0);
 		}
 
@@ -109,7 +119,7 @@ public abstract class Game {
 			private boolean gameover;
 
 			@Override
-			public void teamScored(int teamid, int score) {
+			public void scoreChanged(int teamid, int oldScore, int newScore) {
 			}
 
 			@Override
@@ -166,9 +176,9 @@ public abstract class Game {
 		private ScoreTracker.Listener multiplexed(List<ScoreTracker.Listener> listeners) {
 			return new ScoreTracker.Listener() {
 				@Override
-				public void teamScored(int teamid, int score) {
+				public void scoreChanged(int teamid, int oldScore, int newScore) {
 					for (ScoreTracker.Listener listener : listeners) {
-						listener.teamScored(teamid, score);
+						listener.scoreChanged(teamid, oldScore, newScore);
 					}
 				}
 

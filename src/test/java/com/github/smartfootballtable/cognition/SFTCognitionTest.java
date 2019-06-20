@@ -405,6 +405,7 @@ class SFTCognitionTest {
 		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(anyCorner()));
 		whenInputWasProcessed();
 		thenPayloadsWithTopicAre("team/score/0", "1", "0");
+		thenPayloadsWithTopicAre("team/scored", "0");
 	}
 
 	@Test
@@ -414,6 +415,7 @@ class SFTCognitionTest {
 		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(pos(0.0, 0.5)).then(anyCorner()));
 		whenInputWasProcessed();
 		thenPayloadsWithTopicAre("team/score/0", "1", "0");
+		thenPayloadsWithTopicAre("team/scored", "0");
 	}
 
 	@Test

@@ -103,11 +103,14 @@ public class Messages {
 		return formatter.format(number);
 	}
 
-	public void teamScore(int teamid, int score) {
+	public void teamScored(int teamid) {
 		publish(message("team/scored", teamid));
-		publishTeamScore(teamid, score);
+	}
+
+	public void changeScore(int teamid, int newScore) {
+		publishTeamScore(teamid, newScore);
 		teamsEverScored.add(teamid);
-		gameScore(teamid, score);
+		gameScore(teamid, newScore);
 	}
 
 	private void publishTeamScore(int teamid, int score) {

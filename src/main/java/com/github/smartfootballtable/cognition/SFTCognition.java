@@ -51,8 +51,11 @@ public class SFTCognition {
 		return new ScoreTracker.Listener() {
 
 			@Override
-			public void teamScored(int teamid, int score) {
-				messages.teamScore(teamid, score);
+			public void scoreChanged(int teamid, int oldScore, int newScore) {
+				if (newScore > oldScore) {
+					messages.teamScored(teamid);
+				}
+				messages.changeScore(teamid, newScore);
 			}
 
 			@Override

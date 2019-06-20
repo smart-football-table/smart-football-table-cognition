@@ -3,7 +3,7 @@ package com.github.smartfootballtable.cognition;
 public interface ScoreTracker {
 
 	public static interface Listener {
-		void teamScored(int teamid, int score);
+		void scoreChanged(int teamid, int oldScore, int newScore);
 
 		void won(int teamid);
 
