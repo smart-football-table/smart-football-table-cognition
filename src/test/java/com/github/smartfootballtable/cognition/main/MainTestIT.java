@@ -260,8 +260,8 @@ class MainTestIT {
 	}
 
 	private void publishScoresAndShutdown() {
-		main.cognition().messages().teamScore(0, 2);
-		main.cognition().messages().teamScore(1, 3);
+		main.cognition().messages().changeScore(0, 2);
+		main.cognition().messages().changeScore(1, 3);
 		await().until(() -> messagesWithTopicOf(secondClient, "team/score/0").count(), is(1L));
 		await().until(() -> messagesWithTopicOf(secondClient, "team/score/1").count(), is(1L));
 		haltMain();
