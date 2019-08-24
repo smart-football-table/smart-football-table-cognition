@@ -5,7 +5,6 @@ import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.KIL
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.METERS;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.MILES;
 import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.concurrent.TimeUnit;

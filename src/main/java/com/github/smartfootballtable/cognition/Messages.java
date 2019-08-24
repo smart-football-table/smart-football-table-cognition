@@ -6,6 +6,7 @@ import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.IPS;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.KMH;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPH;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MS;
+import static java.lang.Double.isFinite;
 import static java.util.Locale.US;
 import static java.util.stream.Collectors.joining;
 
@@ -36,7 +37,10 @@ public class Messages {
 
 		public void publishMovement(Movement movement) {
 			for (SpeedUnit unit : units) {
-				Messages.this.publish(message("ball/velocity/" + unit.symbol(), formatDouble(movement.velocity(unit))));
+				double velocity = movement.velocity(unit);
+				if (isFinite(velocity)) {
+					Messages.this.publish(message("ball/velocity/" + unit.symbol(), formatDouble(velocity)));
+				}
 			}
 		}
 

@@ -378,10 +378,14 @@ class SFTCognitionTest {
 		long timeout = SECONDS.toMillis(2);
 		givenTimeWithoutBallTilGoal(timeout, MILLISECONDS);
 		long oneMsMeforeTimeout = timeout - 1;
-		givenInputToProcessIs(ball() //
-				.prepareForLeftGoal().then(offTable()).thenAfterMillis(oneMsMeforeTimeout).then(offTable()).then() //
-				.prepareForRightGoal().then(offTable()).thenAfterMillis(oneMsMeforeTimeout).then(offTable()).then() //
-				.prepareForLeftGoal().then(offTable()).thenAfterMillis(oneMsMeforeTimeout).then(kickoff()).then() //
+		givenInputToProcessIs(ball()
+				//
+				.prepareForLeftGoal().then(offTable()).thenAfterMillis(oneMsMeforeTimeout).then(offTable()).then()
+				//
+				.prepareForRightGoal().then(offTable()).thenAfterMillis(oneMsMeforeTimeout).then(offTable()).then()
+				//
+				.prepareForLeftGoal().then(offTable()).thenAfterMillis(oneMsMeforeTimeout).then(kickoff()).then()
+				//
 				.prepareForRightGoal().then(offTable()).thenAfterMillis(oneMsMeforeTimeout).then(kickoff()) //
 		);
 		whenInputWasProcessed();
@@ -670,19 +674,30 @@ class SFTCognitionTest {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
 
-		givenInputToProcessIs(ball(MINUTES.toMillis(15)) //
-				.prepareForLeftGoal().score().thenAfter(5, SECONDS) //
+		givenInputToProcessIs(ball(MINUTES.toMillis(15))
+				//
+				.prepareForLeftGoal().score().thenAfter(5, SECONDS)
+				//
 				.prepareForLeftGoal().score().thenCall(this::setInProgressConsumer, p -> resetGameAndClearMessages()) //
 				.prepareForRightGoal().score().thenAfter(5, SECONDS) //
 				.prepareForRightGoal().score() //
 		);
 
 		whenInputWasProcessed();
-		// when resetting the game the game/start message is sent immediately as well
+		// when resetting the game the game/start message is sent immediately as
+		// well
 		// when the ball is then detected at the middle line
 		thenPayloadsWithTopicAre("game/start", times("", 2));
 		thenPayloadsWithTopicAre("team/score/1", "1", "2");
 		thenPayloadsWithTopicAre("team/score/0", "0", "0");
+	}
+
+	@Test
+	void whenDurationIsZeroNoVelocityGetsPublished() throws IOException {
+		givenATableOfSize(100, 80, CENTIMETER);
+		givenInputToProcessIs(ball().at(anyPos()).thenAfter(0, MILLISECONDS).at(anyPos()));
+		whenInputWasProcessed();
+		thenNoMessageIsSent(m -> m.getTopic().startsWith("ball/velocity/"));
 	}
 
 	public void setInProgressConsumer(Consumer<RelativePosition> inProgressConsumer) {
@@ -792,6 +807,10 @@ class SFTCognitionTest {
 
 	private Predicate<Message> topic(String topic) {
 		return m -> m.getTopic().equals(topic);
+	}
+
+	private BallPosBuilder anyPos() {
+		return kickoff();
 	}
 
 	private BallPosBuilder anyCorner() {
