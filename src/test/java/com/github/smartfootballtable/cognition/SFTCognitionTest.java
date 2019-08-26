@@ -250,9 +250,9 @@ class SFTCognitionTest {
 	@Test
 	void relativeValuesGetsConvertedToAbsolutes() throws IOException {
 		givenATableOfSize(100, 80, CENTIMETER);
-		givenInputToProcessIs(ball().at(pos(0.0, 1.0)));
+		givenInputToProcessIs(ball().at(pos(0.9, 0.1)));
 		whenInputWasProcessed();
-		thenTheAbsolutePositionOnTheTableIsPublished(0, 80);
+		thenTheAbsolutePositionOnTheTableIsPublished(90, 8);
 	}
 
 	@Test
@@ -293,21 +293,26 @@ class SFTCognitionTest {
 
 	@Test
 	void overallDistance() throws IOException {
-		makeDiamondMoveOnTableIn(CENTIMETER);
+		givenATableOfSize(100, 80, CENTIMETER);
+		makeDiamondMoveOnTableIn();
 		thenPayloadsWithTopicAre("ball/distance/overall/cm", "8.00", "18.00", "26.00", "36.00");
 	}
 
 	@Test
 	void overallDistanceIsSentInInchWhenTableIsImperial() throws IOException {
-		makeDiamondMoveOnTableIn(INCHES);
+		givenATableOfSize(100, 80, INCHES);
+		makeDiamondMoveOnTableIn();
 		thenPayloadsWithTopicAre("ball/distance/overall/inch", "8.00", "18.00", "26.00", "36.00");
 	}
 
-	private void makeDiamondMoveOnTableIn(DistanceUnit distanceUnit) throws IOException {
-		givenATableOfSize(100, 80, distanceUnit);
+	private void makeDiamondMoveOnTableIn() throws IOException {
 		BallPosBuilder base = kickoff();
-		givenInputToProcessIs(
-				ball().at(base.left(0.1)).at(base.up(0.1)).at(base.right(0.1)).at(base.down(0.1)).at(base.left(0.1)));
+		givenInputToProcessIs(ball() //
+				.at(base.left(0.1)) //
+				.at(base.up(0.1)) //
+				.at(base.right(0.1)) //
+				.at(base.down(0.1)) //
+				.at(base.left(0.1)));
 		whenInputWasProcessed();
 	}
 
@@ -674,10 +679,8 @@ class SFTCognitionTest {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
 
-		givenInputToProcessIs(ball(MINUTES.toMillis(15))
-				//
-				.prepareForLeftGoal().score().thenAfter(5, SECONDS)
-				//
+		givenInputToProcessIs(ball(MINUTES.toMillis(15)) //
+				.prepareForLeftGoal().score().thenAfter(5, SECONDS) //
 				.prepareForLeftGoal().score().thenCall(this::setInProgressConsumer, p -> resetGameAndClearMessages()) //
 				.prepareForRightGoal().score().thenAfter(5, SECONDS) //
 				.prepareForRightGoal().score() //
@@ -685,8 +688,7 @@ class SFTCognitionTest {
 
 		whenInputWasProcessed();
 		// when resetting the game the game/start message is sent immediately as
-		// well
-		// when the ball is then detected at the middle line
+		// well when the ball is then detected at the middle line
 		thenPayloadsWithTopicAre("game/start", times("", 2));
 		thenPayloadsWithTopicAre("team/score/1", "1", "2");
 		thenPayloadsWithTopicAre("team/score/0", "0", "0");
