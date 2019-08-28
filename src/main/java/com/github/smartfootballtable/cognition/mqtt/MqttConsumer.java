@@ -80,12 +80,16 @@ public class MqttConsumer implements Consumer<Message>, MessageProvider, Closeab
 	@Override
 	public void accept(Message message) {
 		try {
-			MqttMessage mqttMessage = new MqttMessage(message.getPayload().getBytes());
-			mqttMessage.setRetained(message.isRetained());
-			mqttClient.publish(message.getTopic(), mqttMessage);
+			mqttClient.publish(message.getTopic(), convert(message));
 		} catch (MqttException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private MqttMessage convert(Message message) {
+		MqttMessage mqttMessage = new MqttMessage(message.getPayload().getBytes());
+		mqttMessage.setRetained(message.isRetained());
+		return mqttMessage;
 	}
 
 	@Override
