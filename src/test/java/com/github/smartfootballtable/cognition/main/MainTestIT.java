@@ -4,10 +4,11 @@ import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.create;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.noPosition;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
+import static com.github.stefanbirkner.systemlambda.SystemLambda.muteSystemErr;
 import static io.moquette.BrokerConstants.HOST_PROPERTY_NAME;
 import static io.moquette.BrokerConstants.PORT_PROPERTY_NAME;
 import static java.lang.System.currentTimeMillis;
-import static java.time.Duration.ofSeconds;
+import static java.time.Duration.ofMinutes;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -43,10 +44,7 @@ import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
@@ -55,10 +53,9 @@ import com.github.smartfootballtable.cognition.mqtt.MqttConsumer;
 import io.moquette.server.Server;
 import io.moquette.server.config.MemoryConfig;
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class MainTestIT {
 
-	private static Duration timeout = ofSeconds(30);
+	private static Duration timeout = ofMinutes(2);
 	private static final String LOCALHOST = "localhost";
 
 	static class MqttClientForTest implements Closeable {
@@ -124,6 +121,7 @@ class MainTestIT {
 
 		public void close() throws IOException {
 			try {
+				client.unsubscribe("#");
 				client.disconnect();
 				client.close();
 			} catch (MqttException e) {
@@ -202,7 +200,7 @@ class MainTestIT {
 	}
 
 	@Test
-	void doesPublishWhenReceiving() {
+	void doesPublishAbsWhenReceivingRel() {
 		assertTimeoutPreemptively(timeout, () -> {
 			publish("ball/position/rel", "0.123,0.456");
 			await().until(() -> payloads(secondClient.getReceived(), "ball/position/abs"), is(asList("14.0,31.0")));
@@ -219,16 +217,15 @@ class MainTestIT {
 	}
 
 	@Test
-	// although no test depends on any other, this test fails when run as the last
-	// one
-	@Order(0)
 	void doesReconnectAndResubscribe()
 			throws IOException, InterruptedException, MqttPersistenceException, MqttException {
 		assertTimeoutPreemptively(timeout, () -> {
 			publish(positions(anyAmount()));
-			restartBroker();
-			await().until(secondClient::isConnected);
-			await().until(main.mqttConsumer()::isConnected);
+			muteSystemErr(() -> {
+				restartBroker();
+				await().until(secondClient::isConnected);
+				await().until(main.mqttConsumer()::isConnected);
+			});
 			assertReceivesGameStartWhenSendingReset();
 		});
 	}
