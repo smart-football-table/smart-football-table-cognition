@@ -690,7 +690,9 @@ class SFTCognitionTest {
 		// when resetting the game the game/start message is sent immediately as
 		// well when the ball is then detected at the middle line
 		thenPayloadsWithTopicAre("game/start", times("", 2));
+		thenPayloadsWithTopicAre("game/score/1", "1", "2");
 		thenPayloadsWithTopicAre("team/score/1", "1", "2");
+		thenPayloadsWithTopicAre("game/score/0", "0", "0");
 		thenPayloadsWithTopicAre("team/score/0", "0", "0");
 	}
 
