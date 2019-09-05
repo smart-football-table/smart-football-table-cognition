@@ -86,6 +86,7 @@ public class Messages {
 
 	private void resetScores() {
 		teamsEverScored.forEach(teamId -> publishTeamScore(teamId, 0));
+		teamsEverScored.forEach(teamId -> gameScore(teamId, 0));
 	}
 
 	public void pos(AbsolutePosition pos) {
