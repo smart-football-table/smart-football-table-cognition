@@ -203,7 +203,7 @@ class MainTestIT {
 	void doesPublishAbsWhenReceivingRel() {
 		assertTimeoutPreemptively(timeout, () -> {
 			publish("ball/position/rel", "0.123,0.456");
-			await().until(() -> payloads(secondClient.getReceived(), "ball/position/abs"), is(asList("14.0,31.0")));
+			await().until(() -> payloads(secondClient.getReceived(), "ball/position/abs"), is(asList("14.76,31.01")));
 		});
 	}
 

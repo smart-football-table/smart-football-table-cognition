@@ -244,7 +244,7 @@ class SFTCognitionTest {
 		givenATableOfSize(100, 80, CENTIMETER);
 		givenInputToProcessIs(ball().at(kickoff()));
 		whenInputWasProcessed();
-		thenTheAbsolutePositionOnTheTableIsPublished(100 / 2, 80 / 2);
+		thenTheAbsolutePositionOnTheTableIsPublished("50.00", "40.00");
 	}
 
 	@Test
@@ -252,7 +252,7 @@ class SFTCognitionTest {
 		givenATableOfSize(100, 80, CENTIMETER);
 		givenInputToProcessIs(ball().at(pos(0.9, 0.1)));
 		whenInputWasProcessed();
-		thenTheAbsolutePositionOnTheTableIsPublished(90, 8);
+		thenTheAbsolutePositionOnTheTableIsPublished("90.00", "8.00");
 	}
 
 	@Test
@@ -748,7 +748,7 @@ class SFTCognitionTest {
 		sut.resetGame();
 	}
 
-	private void thenTheAbsolutePositionOnTheTableIsPublished(double x, double y) {
+	private void thenTheAbsolutePositionOnTheTableIsPublished(String x, String y) {
 		assertOneMessageWithPayload(messagesWithTopic("ball/position/abs"), is(makePayload(x, y)));
 	}
 
@@ -801,7 +801,7 @@ class SFTCognitionTest {
 		return range(0, times).mapToObj(i -> value).toArray(String[]::new);
 	}
 
-	private String makePayload(double x, double y) {
+	private String makePayload(String x, String y) {
 		return x + "," + y;
 	}
 

@@ -7,11 +7,13 @@ import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.KMH;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MPH;
 import static com.github.smartfootballtable.cognition.data.unit.SpeedUnit.MS;
 import static java.lang.Double.isFinite;
+import static java.math.RoundingMode.HALF_UP;
 import static java.util.Locale.US;
 import static java.util.stream.Collectors.joining;
 
 import java.text.NumberFormat;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -68,6 +70,7 @@ public class Messages {
 		formatter.setMaximumFractionDigits(2);
 		formatter.setMinimumFractionDigits(2);
 		formatter.setGroupingUsed(false);
+		formatter.setRoundingMode(HALF_UP);
 		return formatter;
 	}
 
@@ -93,7 +96,7 @@ public class Messages {
 	}
 
 	private String posPayload(Position pos) {
-		return pos.getX() + "," + pos.getY();
+		return formatDouble(pos.getX()) + "," + formatDouble(pos.getY());
 	}
 
 	public void movement(Movement movement, Distance overallDistance) {
