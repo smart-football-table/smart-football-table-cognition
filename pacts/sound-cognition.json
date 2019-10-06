@@ -9,17 +9,27 @@
     {
       "description": "id of team that scored",
       "metaData": {
-        "topic": "team/scored",
-        "contentType": "text/plain"
+        "contentType": "application/json; charset\u003dUTF-8"
       },
-      "contents": "1",
+      "contents": {
+        "payload": "1",
+        "topic": "team/scored"
+      },
       "matchingRules": {
         "body": {
-          "$": {
+          "$.topic": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ],
+            "combine": "AND"
+          },
+          "$.payload": {
             "matchers": [
               {
                 "match": "regex",
-                "regex": "\\d+"
+                "regex": "\\d*"
               }
             ],
             "combine": "AND"

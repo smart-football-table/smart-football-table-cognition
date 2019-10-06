@@ -9,10 +9,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -23,11 +22,10 @@ import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 
 import au.com.dius.pact.consumer.MessagePactBuilder;
-import au.com.dius.pact.consumer.dsl.PactDslRootValue;
+import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
 import au.com.dius.pact.core.model.annotations.Pact;
-import au.com.dius.pact.core.model.matchingrules.RegexMatcher;
 import au.com.dius.pact.core.model.messaging.MessagePact;
 
 @ExtendWith(PactConsumerTestExt.class)
@@ -51,33 +49,12 @@ class ConsumerPactTest {
 
 	@Pact(consumer = "cognition")
 	MessagePact userCreatedMessagePact(MessagePactBuilder builder) {
+		PactDslJsonBody body = new PactDslJsonBody().stringType("topic", "ball/position/rel").stringMatcher("payload",
+				"\\d*\\.?\\d+,\\d*\\.?\\d+", "0.123,0.456");
 		return builder //
 				.expectsToReceive("when ball moves on table the relative position gets published") //
-				.withMetadata(topic("ball/position/rel")) //
-				.withContent(payload("0.123,0.456", "\\d*\\.?\\d+,\\d*\\.?\\d+")) //
+				.withContent(body) //
 				.toPact();
-	}
-
-	private PactDslRootValue payload(String example, String regex) {
-		PactDslRootValue pactValue = payload(example);
-		pactValue.setMatcher(new RegexMatcher(regex, example));
-		return pactValue;
-	}
-
-	private PactDslRootValue payload(String payload) {
-		return new PactDslRootValue() {
-			@Override
-			public String toString() {
-				return payload;
-			}
-		};
-	}
-
-	private Map<String, Object> topic(String topic) {
-		Map<String, Object> map = new HashMap<>();
-		map.put("contentType", "text/plain");
-		map.put("topic", topic);
-		return map;
 	}
 
 	private List<Message> filter(List<Message> messages) {
@@ -85,7 +62,8 @@ class ConsumerPactTest {
 	}
 
 	private Message toMessage(au.com.dius.pact.core.model.messaging.Message message) {
-		return message(message.getMetaData().get("topic"), message.contentsAsString());
+		JSONObject jsonObject = new JSONObject(message.contentsAsString());
+		return message(jsonObject.getString("topic"), jsonObject.getString("payload"));
 	}
 
 	private RelativePosition toRelPosition(Messages messages, Message m) {
