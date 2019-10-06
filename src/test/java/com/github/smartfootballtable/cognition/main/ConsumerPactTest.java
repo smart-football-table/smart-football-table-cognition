@@ -28,6 +28,7 @@ import au.com.dius.pact.consumer.dsl.PactDslRootValue;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
 import au.com.dius.pact.core.model.annotations.Pact;
+import au.com.dius.pact.core.model.matchingrules.RegexMatcher;
 import au.com.dius.pact.core.model.messaging.MessagePact;
 
 @ExtendWith(PactConsumerTestExt.class)
@@ -51,13 +52,21 @@ class ConsumerPactTest {
 
 	@Pact(consumer = "cognition")
 	MessagePact userCreatedMessagePact(MessagePactBuilder builder) {
-		return builder.expectsToReceive("ball moves on table") //
+		return builder //
+				.given("ball moves on table") //
+				.expectsToReceive("double value x and y of the relative position") //
 				.withMetadata(topic("ball/position/rel")) //
-				.withContent(payload("0.123,0.456")) //
+				.withContent(payload("0.123,0.456", "\\d*\\.?\\d+,\\d*\\.?\\d+")) //
 				.toPact();
 	}
 
-	private DslPart payload(String payload) {
+	private PactDslRootValue payload(String example, String regex) {
+		PactDslRootValue pactValue = payload(example);
+		pactValue.setMatcher(new RegexMatcher(regex, example));
+		return pactValue;
+	}
+
+	private PactDslRootValue payload(String payload) {
 		return new PactDslRootValue() {
 			@Override
 			public String toString() {
