@@ -23,7 +23,6 @@ import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 
 import au.com.dius.pact.consumer.MessagePactBuilder;
-import au.com.dius.pact.consumer.dsl.DslPart;
 import au.com.dius.pact.consumer.dsl.PactDslRootValue;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
@@ -53,8 +52,7 @@ class ConsumerPactTest {
 	@Pact(consumer = "cognition")
 	MessagePact userCreatedMessagePact(MessagePactBuilder builder) {
 		return builder //
-				.given("ball moves on table") //
-				.expectsToReceive("double value x and y of the relative position") //
+				.expectsToReceive("when ball moves on table the relative position gets published") //
 				.withMetadata(topic("ball/position/rel")) //
 				.withContent(payload("0.123,0.456", "\\d*\\.?\\d+,\\d*\\.?\\d+")) //
 				.toPact();

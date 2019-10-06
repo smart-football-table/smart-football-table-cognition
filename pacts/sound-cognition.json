@@ -1,0 +1,39 @@
+{
+  "consumer": {
+    "name": "sound"
+  },
+  "provider": {
+    "name": "cognition"
+  },
+  "messages": [
+    {
+      "description": "id of team that scored",
+      "metaData": {
+        "topic": "team/scored",
+        "contentType": "text/plain"
+      },
+      "contents": "1",
+      "matchingRules": {
+        "body": {
+          "$": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "\\d+"
+              }
+            ],
+            "combine": "AND"
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    },
+    "pact-jvm": {
+      "version": "4.0.0"
+    }
+  }
+}
