@@ -52,10 +52,7 @@ public class SFTCognition {
 
 			@Override
 			public void scoreChanged(int teamid, int oldScore, int newScore) {
-				if (newScore > oldScore) {
-					messages.teamScored(teamid);
-				}
-				messages.changeScore(teamid, newScore);
+				messages.scoreChanged(teamid, oldScore, newScore);
 			}
 
 			@Override

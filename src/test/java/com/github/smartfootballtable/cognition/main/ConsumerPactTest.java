@@ -49,12 +49,17 @@ class ConsumerPactTest {
 
 	@Pact(consumer = "cognition")
 	MessagePact userCreatedMessagePact(MessagePactBuilder builder) {
-		PactDslJsonBody body = new PactDslJsonBody().stringType("topic", "ball/position/rel").stringMatcher("payload",
-				"\\d*\\.?\\d+,\\d*\\.?\\d+", "0.123,0.456");
 		return builder //
-				.expectsToReceive("when ball moves on table the relative position gets published") //
-				.withContent(body) //
+				.given("the ball moved on the table") //
+				.expectsToReceive("the relative position gets published") //
+				.withContent(body()) //
 				.toPact();
+	}
+
+	private PactDslJsonBody body() {
+		return new PactDslJsonBody() //
+				.stringType("topic", "ball/position/rel") //
+				.stringMatcher("payload", "\\d*\\.?\\d+,\\d*\\.?\\d+", "0.123,0.456");
 	}
 
 	private List<Message> filter(List<Message> messages) {

@@ -3,10 +3,10 @@ package com.github.smartfootballtable.cognition.main;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
 import static java.lang.Integer.MAX_VALUE;
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.joining;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +19,7 @@ import com.github.smartfootballtable.cognition.data.Table;
 
 import au.com.dius.pact.provider.PactVerifyProvider;
 import au.com.dius.pact.provider.junit.Provider;
+import au.com.dius.pact.provider.junit.State;
 import au.com.dius.pact.provider.junit.loader.PactFolder;
 import au.com.dius.pact.provider.junit.target.TestTarget;
 import au.com.dius.pact.provider.junit5.AmpqTestTarget;
@@ -35,13 +36,8 @@ public class ContractVerificationTest {
 	private final List<Message> sendMessages = new ArrayList<>();
 	private final SFTCognition cognition = new SFTCognition(anyTable(), sendMessages::add);
 
-	private Table anyTable() {
-		return new Table(120, 68, CENTIMETER);
-	}
-
 	@BeforeEach
 	void before(PactVerificationContext context) {
-		// TODO verify metadata team/scored
 		context.setTarget(target);
 	}
 
@@ -51,14 +47,32 @@ public class ContractVerificationTest {
 		context.verifyInteraction();
 	}
 
-	@PactVerifyProvider("id of team that scored")
-	public String idOfTeamThatScored() {
-		cognition.messages().teamScored(MAX_VALUE);
-		return payloads();
+	@State("a goal was shot")
+	public void aGoalWasShot() {
+		int oldScore = anyScore();
+		cognition.messages().scoreChanged(anyTeam(), oldScore, oldScore + 1);
 	}
 
-	private String payloads() {
-		return sendMessages.stream().map(this::toJson).collect(joining());
+	@PactVerifyProvider("the scoring team gets published")
+	public String theScoringTeamGetsPublished() {
+		return payloads("team/scored");
+	}
+
+	private String payloads(String topic) {
+		return sendMessages.stream().filter(m -> topic.equals(m.getTopic())).map(this::toJson).findFirst()
+				.orElseThrow(() -> new NoSuchElementException("no message with topic " + topic + " found"));
+	}
+
+	private Table anyTable() {
+		return new Table(120, 68, CENTIMETER);
+	}
+
+	private int anyTeam() {
+		return MAX_VALUE;
+	}
+
+	private int anyScore() {
+		return 1;
 	}
 
 	private String toJson(Message message) {

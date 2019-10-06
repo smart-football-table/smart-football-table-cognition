@@ -7,14 +7,19 @@
   },
   "messages": [
     {
-      "description": "id of team that scored",
+      "description": "the scoring team gets published",
       "metaData": {
-        "contentType": "application/json; charset\u003dUTF-8"
+        "contentType": "application/json; charset=UTF-8"
       },
       "contents": {
         "payload": "1",
         "topic": "team/scored"
       },
+      "providerStates": [
+        {
+          "name": "a goal was shot"
+        }
+      ],
       "matchingRules": {
         "body": {
           "$.topic": {

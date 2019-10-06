@@ -107,13 +107,8 @@ public class Messages {
 		return formatter.format(number);
 	}
 
-	public void teamScored(int teamid) {
+	private void teamScored(int teamid) {
 		publish(message("team/scored", teamid));
-	}
-
-	public void changeScore(int teamid, int newScore) {
-		publishTeamScore(teamid, newScore);
-		teamsEverScored.add(teamid);
 	}
 
 	private void publishTeamScore(int teamid, int score) {
@@ -177,6 +172,14 @@ public class Messages {
 			}
 		}
 		return null;
+	}
+
+	public void scoreChanged(int teamid, int oldScore, int newScore) {
+		if (newScore > oldScore) {
+			teamScored(teamid);
+		}
+		publishTeamScore(teamid, newScore);
+		teamsEverScored.add(teamid);
 	}
 
 	private static Double toDouble(String val) {
