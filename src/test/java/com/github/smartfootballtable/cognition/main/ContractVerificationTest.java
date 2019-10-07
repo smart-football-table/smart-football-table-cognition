@@ -7,6 +7,7 @@ import static java.util.Collections.emptyList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.Predicate;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,12 +56,21 @@ public class ContractVerificationTest {
 
 	@PactVerifyProvider("the scoring team gets published")
 	public String theScoringTeamGetsPublished() {
-		return payloads("team/scored");
+		return payloadsWithTopic("team/scored");
 	}
 
-	private String payloads(String topic) {
-		return sendMessages.stream().filter(m -> topic.equals(m.getTopic())).map(this::toJson).findFirst()
-				.orElseThrow(() -> new NoSuchElementException("no message with topic " + topic + " found"));
+	@PactVerifyProvider("the new score gets published")
+	public String theNewScoreGetsPublished() {
+		return payloads(m -> m.getTopic().matches("team\\/score\\/\\d+"));
+	}
+
+	private String payloadsWithTopic(String topic) {
+		return payloads(m -> topic.equals(m.getTopic()));
+	}
+
+	private String payloads(Predicate<Message> predicate) {
+		return sendMessages.stream().filter(predicate).map(this::toJson).findFirst()
+				.orElseThrow(() -> new NoSuchElementException("no message that matches " + predicate + " found"));
 	}
 
 	private Table anyTable() {

@@ -38,29 +38,29 @@ class ConsumerPactTest {
 	}
 
 	@Test
-	@PactTestFor(providerName = "detection", providerType = ASYNCH)
-	void verifyCreatePersonPact(MessagePact pact) {
-		Table table = new Table(120, 68, CENTIMETER);
+	@PactTestFor(providerName = "detection", pactMethod = "relativeBallPositionPact", providerType = ASYNCH)
+	void verifyRelativePositionIsPublished(MessagePact pact) {
+		Table table = new Table(200, 100, CENTIMETER);
 		List<Message> consumed = new ArrayList<>();
 		SFTCognition cognition = new SFTCognition(table, consumed::add);
 		cognition.process(
 				pact.getMessages().stream().map(this::toMessage).map(m -> toRelPosition(cognition.messages(), m)));
-		assertThat(filter(consumed), is(asList(message("ball/position/abs", "14.0,31.0"))));
+		assertThat(filter(consumed), is(asList(message("ball/position/abs", "24.60,45.60"))));
 	}
 
 	@Pact(consumer = "cognition")
-	MessagePact userCreatedMessagePact(MessagePactBuilder builder) {
+	MessagePact relativeBallPositionPact(MessagePactBuilder builder) {
 		return builder //
 				.given("the ball moved on the table") //
 				.expectsToReceive("the relative position gets published") //
-				.withContent(body()) //
+				.withContent(body("0.123" + "," + "0.456")) //
 				.toPact();
 	}
 
-	private PactDslJsonBody body() {
+	private PactDslJsonBody body(String payload) {
 		return new PactDslJsonBody() //
 				.stringType("topic", "ball/position/rel") //
-				.stringMatcher("payload", "\\d*\\.?\\d+,\\d*\\.?\\d+", "0.123,0.456");
+				.stringMatcher("payload", "\\d*\\.?\\d+,\\d*\\.?\\d+", payload);
 	}
 
 	private List<Message> filter(List<Message> messages) {
