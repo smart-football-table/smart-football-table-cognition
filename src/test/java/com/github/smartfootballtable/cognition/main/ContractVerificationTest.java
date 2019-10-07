@@ -28,7 +28,7 @@ import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvide
 
 @Provider("cognition")
 @PactFolder("pacts")
-public class ContractVerificationTest {
+class ContractVerificationTest {
 
 	@TestTarget
 	public final AmpqTestTarget target = new AmpqTestTarget(emptyList());

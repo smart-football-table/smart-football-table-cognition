@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -31,10 +32,10 @@ import au.com.dius.pact.core.model.messaging.MessagePact;
 @ExtendWith(PactConsumerTestExt.class)
 class ConsumerPactTest {
 
-	// JAVA https://reflectoring.io/cdc-pact-messages/
-	// JS https://reflectoring.io/pact-node-messaging/
-	// JS
-	// https://github.com/pact-foundation/pact-js/tree/feat/message-pact/#asynchronous-api-testing
+	@BeforeEach
+	void setup() {
+		System.setProperty("pact.rootDir", "pacts");
+	}
 
 	@Test
 	@PactTestFor(providerName = "detection", providerType = ASYNCH)
