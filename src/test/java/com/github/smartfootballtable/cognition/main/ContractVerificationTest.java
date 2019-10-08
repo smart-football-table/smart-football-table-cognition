@@ -59,7 +59,7 @@ public class ContractVerificationTest {
 		return payloadsWithTopic("team/scored");
 	}
 
-	@PactVerifyProvider("the new score gets published")
+	@PactVerifyProvider("the team's new score")
 	public String theNewScoreGetsPublished() {
 		return payloads(m -> m.getTopic().matches("team\\/score\\/\\d+"));
 	}

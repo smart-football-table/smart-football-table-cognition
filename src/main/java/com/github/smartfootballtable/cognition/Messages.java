@@ -13,7 +13,6 @@ import static java.util.stream.Collectors.joining;
 
 import java.text.NumberFormat;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
