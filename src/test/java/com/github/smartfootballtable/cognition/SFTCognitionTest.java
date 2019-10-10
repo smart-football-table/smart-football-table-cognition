@@ -158,6 +158,7 @@ class SFTCognitionTest {
 		}
 
 		private StdInBuilder then(BallPosBuilder ballPosBuilder) {
+			
 			return at(ballPosBuilder);
 		}
 
