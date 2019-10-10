@@ -44,7 +44,7 @@ public class ContractVerificationTest {
 
 	@TestTemplate
 	@ExtendWith(PactVerificationInvocationContextProvider.class)
-	void pactVerificationTestTemplate(PactVerificationContext context) {
+	void verifyContracts(PactVerificationContext context) {
 		context.verifyInteraction();
 	}
 
@@ -52,6 +52,16 @@ public class ContractVerificationTest {
 	public void aGoalWasShot() {
 		int oldScore = anyScore();
 		cognition.messages().scoreChanged(anyTeam(), oldScore, oldScore + 1);
+	}
+
+	@State("a team fouled")
+	public void aTeamFouled() {
+		cognition.messages().foul();
+	}
+
+	@State("the table is idle")
+	public void theTableIsIdle() {
+		cognition.messages().idle(true);
 	}
 
 	@PactVerifyProvider("the scoring team gets published")
@@ -62,6 +72,16 @@ public class ContractVerificationTest {
 	@PactVerifyProvider("the team's new score")
 	public String theNewScoreGetsPublished() {
 		return payloads(m -> m.getTopic().matches("team\\/score\\/\\d+"));
+	}
+
+	@PactVerifyProvider("the foul message")
+	public String theFoulMessage() {
+		return payloadsWithTopic("game/foul");
+	}
+
+	@PactVerifyProvider("the idle message")
+	public String theIdleMessage() {
+		return payloadsWithTopic("game/idle");
 	}
 
 	private String payloadsWithTopic(String topic) {
