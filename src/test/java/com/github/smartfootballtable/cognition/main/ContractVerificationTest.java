@@ -59,6 +59,11 @@ public class ContractVerificationTest {
 		cognition.messages().foul();
 	}
 
+	@State("the table is idle")
+	public void theTableIsIdle() {
+		cognition.messages().idle(true);
+	}
+
 	@PactVerifyProvider("the scoring team gets published")
 	public String theScoringTeamGetsPublished() {
 		return payloadsWithTopic("team/scored");
@@ -72,6 +77,11 @@ public class ContractVerificationTest {
 	@PactVerifyProvider("the foul message")
 	public String theFoulMessage() {
 		return payloadsWithTopic("game/foul");
+	}
+
+	@PactVerifyProvider("the idle message")
+	public String theIdleMessage() {
+		return payloadsWithTopic("game/idle");
 	}
 
 	private String payloadsWithTopic(String topic) {
