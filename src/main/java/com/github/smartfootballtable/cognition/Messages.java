@@ -136,7 +136,7 @@ public class Messages {
 		publish(message(GAME_GAMEOVER, teamid));
 	}
 
-	public void gameDraw(int[] teamids) {
+	public void gameDraw(int... teamids) {
 		publish(message(GAME_GAMEOVER, IntStream.of(teamids).mapToObj(String::valueOf).collect(joining(","))));
 	}
 

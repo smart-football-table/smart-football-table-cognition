@@ -2,11 +2,10 @@ package com.github.smartfootballtable.cognition.main;
 
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
 import static java.lang.Integer.MAX_VALUE;
-import static java.util.Collections.emptyList;
+import static java.util.Arrays.asList;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
 import org.json.JSONObject;
@@ -32,7 +31,7 @@ import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvide
 public class ContractVerificationTest {
 
 	@TestTarget
-	public final AmpqTestTarget target = new AmpqTestTarget(emptyList());
+	public final AmpqTestTarget target = new AmpqTestTarget(asList("com.github.smartfootballtable.cognition"));
 
 	private final List<Message> sendMessages = new ArrayList<>();
 	private final SFTCognition cognition = new SFTCognition(anyTable(), sendMessages::add);
@@ -64,6 +63,16 @@ public class ContractVerificationTest {
 		cognition.messages().idle(true);
 	}
 
+	@State("a team has won the game")
+	public void oneTeamHasWonTheGame() {
+		cognition.messages().gameWon(anyTeam());
+	}
+
+	@State("a game ends draw")
+	public void aGameEndsDraw() {
+		cognition.messages().gameDraw(0, 1, anyTeam(), 2, 3, 4, 5, 6);
+	}
+
 	@PactVerifyProvider("the scoring team gets published")
 	public String theScoringTeamGetsPublished() {
 		return payloadsWithTopic("team/scored");
@@ -79,6 +88,11 @@ public class ContractVerificationTest {
 		return payloadsWithTopic("game/foul");
 	}
 
+	@PactVerifyProvider("the gameover message")
+	public String theGameoverMessageWin() {
+		return payloadsWithTopic("game/gameover");
+	}
+
 	@PactVerifyProvider("the idle message")
 	public String theIdleMessage() {
 		return payloadsWithTopic("game/idle");
@@ -89,8 +103,7 @@ public class ContractVerificationTest {
 	}
 
 	private String payloads(Predicate<Message> predicate) {
-		return sendMessages.stream().filter(predicate).map(this::toJson).findFirst()
-				.orElseThrow(() -> new NoSuchElementException("no message that matches " + predicate + " found"));
+		return sendMessages.stream().filter(predicate).map(this::toJson).findFirst().orElse("");
 	}
 
 	private Table anyTable() {
