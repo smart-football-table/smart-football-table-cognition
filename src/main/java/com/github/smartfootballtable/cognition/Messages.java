@@ -137,11 +137,15 @@ public class Messages {
 	}
 
 	public void gameDraw(int... teamids) {
-		publish(message(GAME_GAMEOVER, IntStream.of(teamids).mapToObj(String::valueOf).collect(joining(","))));
+		publish(message(GAME_GAMEOVER, join(",", teamids)));
 	}
 
-	public void idle(boolean b) {
-		publish(message(GAME_IDLE, Boolean.toString(b)));
+	public void idle(boolean isIdle) {
+		publish(message(GAME_IDLE, Boolean.toString(isIdle)));
+	}
+
+	private static String join(String separator, int... teamids) {
+		return IntStream.of(teamids).mapToObj(String::valueOf).collect(joining(separator));
 	}
 
 	private void publish(Message message) {

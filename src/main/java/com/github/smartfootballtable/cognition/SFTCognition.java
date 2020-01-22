@@ -39,12 +39,14 @@ public class SFTCognition {
 	}
 
 	public SFTCognition receiver(MessageProvider provider) {
-		provider.addConsumer(m -> {
-			if (messages.isReset(m)) {
-				resetGame();
-			}
-		});
+		provider.addConsumer(this::resetGameWhenResetMessage);
 		return this;
+	}
+
+	private void resetGameWhenResetMessage(Message message) {
+		if (messages.isReset(message)) {
+			resetGame();
+		}
 	}
 
 	private ScoreTracker.Listener scoreTracker(Messages messages, Consumer<Message> consumer) {
