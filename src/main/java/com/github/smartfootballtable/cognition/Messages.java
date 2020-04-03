@@ -180,20 +180,22 @@ public class Messages {
 	}
 
 	public Optional<RelativePosition> parsePosition(Message xPosition, Message yPosition) {
-		if (xPosition != null && yPosition != null) {
-			Matcher matcherX = matcher(xPosition, BALL_POSITION_REL_X);
-			Matcher matcherY = matcher(yPosition, BALL_POSITION_REL_Y);
-			if (matcherX.find() && matcherY.find()) {
-				Long timestampX = toLong(matcherX.group(1));
-				Long timestampY = toLong(matcherY.group(1));
-				Double x = toDouble(xPosition.getPayload());
-				Double y = toDouble(yPosition.getPayload());
-				if (x != null && y != null && timestampX != null && timestampY != null
-						&& Objects.equals(timestampX, timestampY)) {
-					return Optional.of(RelativePosition.create(timestampX, x, y));
-				}
+		if (xPosition == null || yPosition == null) {
+			return Optional.empty();
+		}
+		Matcher matcherX = matcher(xPosition, BALL_POSITION_REL_X);
+		Matcher matcherY = matcher(yPosition, BALL_POSITION_REL_Y);
+		if (matcherX.find() && matcherY.find()) {
+			Long timestampX = toLong(matcherX.group(1));
+			Long timestampY = toLong(matcherY.group(1));
+			Double x = toDouble(xPosition.getPayload());
+			Double y = toDouble(yPosition.getPayload());
+			if (x != null && y != null && timestampX != null && timestampY != null
+					&& Objects.equals(timestampX, timestampY)) {
+				return Optional.of(RelativePosition.create(timestampX, x, y));
 			}
 		}
+		System.out.println("--- " + xPosition + " " + yPosition);
 		return Optional.empty();
 	}
 

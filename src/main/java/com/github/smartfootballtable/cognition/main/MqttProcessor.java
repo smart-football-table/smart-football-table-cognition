@@ -29,7 +29,12 @@ public final class MqttProcessor {
 			} else if (messages.isRelativePositionY(message)) {
 				lastY = message;
 			}
-			return messages.parsePosition(lastX, lastY);
+			Optional<RelativePosition> parsePosition = messages.parsePosition(lastX, lastY);
+			if (parsePosition.isPresent()) {
+				lastX = null;
+				lastY = null;
+			}
+			return parsePosition;
 		}
 	}
 

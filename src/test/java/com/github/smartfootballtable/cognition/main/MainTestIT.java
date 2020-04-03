@@ -13,6 +13,7 @@ import static java.util.Arrays.asList;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static org.awaitility.Awaitility.await;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -202,9 +204,16 @@ class MainTestIT {
 	@Test
 	void doesPublishAbsWhenReceivingRel() {
 		assertTimeoutPreemptively(timeout, () -> {
-			publish("ball/position/rel", "0.123,0.456");
-			await().until(() -> payloads(secondClient.getReceived(), "ball/position/abs"), is(asList("14.76,31.01")));
+			publish(RelativePosition.create(System.currentTimeMillis(), 0.123, 0.456));
+			await().until(() -> payloads(secondClient.getReceived(), topicMatches("ball/position/\\d+/abs/x")),
+					is(asList("14.76")));
+			await().until(() -> payloads(secondClient.getReceived(), topicMatches("ball/position/\\d+/abs/y")),
+					is(asList("31.01")));
 		});
+	}
+
+	private Predicate<Message> topicMatches(String regexp) {
+		return m -> compile(regexp).matcher(m.getTopic()).matches();
 	}
 
 	@Test
@@ -269,7 +278,11 @@ class MainTestIT {
 	}
 
 	private List<String> payloads(List<Message> receivedRetained, String topic) {
-		return messagesWithTopic(receivedRetained, topic).map(Message::getPayload).collect(toList());
+		return payloads(receivedRetained, m -> m.getTopic().equals(topic));
+	}
+
+	private List<String> payloads(List<Message> receivedRetained, Predicate<? super Message> predicate) {
+		return receivedRetained.stream().filter(predicate).map(Message::getPayload).collect(toList());
 	}
 
 	private void assertReceivesGameStartWhenSendingReset()
@@ -285,11 +298,8 @@ class MainTestIT {
 	}
 
 	private Stream<Message> messagesWithTopicOf(MqttClientForTest mqttClient, String topic) {
-		return messagesWithTopic(mqttClient.getReceived(), topic);
-	}
-
-	private Stream<Message> messagesWithTopic(List<Message> messages, String topic) {
-		return messages.stream().filter(m -> m.getTopic().equals(topic));
+		Predicate<? super Message> predicate = m -> m.getTopic().equals(topic);
+		return mqttClient.getReceived().stream().filter(predicate);
 	}
 
 	private void restartBroker() throws IOException, InterruptedException {
@@ -306,8 +316,10 @@ class MainTestIT {
 	}
 
 	private void publish(RelativePosition position) {
+		String topicPrefix = "ball/position/" + position.getTimestamp() + "/rel/";
 		try {
-			publish("ball/position/rel", position.getX() + "," + position.getY());
+			publish(topicPrefix + "x", String.valueOf(position.getX()));
+			publish(topicPrefix + "y", String.valueOf(position.getY()));
 		} catch (MqttException e) {
 			throw new RuntimeException(e);
 		}

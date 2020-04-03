@@ -22,7 +22,6 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +37,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.hamcrest.Matcher;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.github.smartfootballtable.cognition.SFTCognitionTest.MessageBuilder.BallPosBuilder;
@@ -207,17 +205,13 @@ class SFTCognitionTest {
 		public MessageBuilder thenCall(Consumer<Consumer<RelativePosition>> setter, Consumer<RelativePosition> c) {
 			setter.accept(new Consumer<RelativePosition>() {
 				long timestampNow = timestamp;
-				private boolean processed;
 				private boolean called;
 
 				@Override
 				public void accept(RelativePosition pos) {
-					if (processed && !called) {
+					if (!called && pos.getTimestamp() == timestampNow) {
 						c.accept(pos);
 						called = true;
-					}
-					if (pos.getTimestamp() == timestampNow) {
-						processed = true;
 					}
 				}
 			});
@@ -675,7 +669,6 @@ class SFTCognitionTest {
 	}
 
 	@Test
-	@Disabled("not working at the moment, has to been fixed")
 	void canResetAgameInPlay() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
@@ -695,15 +688,6 @@ class SFTCognitionTest {
 		thenPayloadsWithTopicAre("team/score/1", "1", "2");
 		thenPayloadsWithTopicAre("game/score/0", "0", "0");
 		thenPayloadsWithTopicAre("team/score/0", "0", "0");
-	}
-
-	@Test
-	@Disabled("not yet implemented")
-	void addTestIfTheDistancesAreCorrect() throws Exception {
-		givenInputToProcessIs(ball().at(kickoff()) //
-				.then().offTableFor(1, MILLISECONDS) //
-				.then().at(kickoff()));
-		fail();
 	}
 
 	@Test
