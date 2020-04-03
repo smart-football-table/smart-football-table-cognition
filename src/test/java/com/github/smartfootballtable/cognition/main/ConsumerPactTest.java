@@ -10,6 +10,8 @@ import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +23,7 @@ import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
+import com.github.smartfootballtable.cognition.main.MqttProcessor.ToRelPosition;
 
 import au.com.dius.pact.consumer.MessagePactBuilder;
 import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
@@ -40,27 +43,33 @@ class ConsumerPactTest {
 	@Test
 	@PactTestFor(providerName = "detection", pactMethod = "relativeBallPositionPact", providerType = ASYNCH)
 	void verifyRelativePositionIsPublished(MessagePact pact) {
+		System.out.println(pact.getMessages());
 		Table table = new Table(200, 100, CENTIMETER);
 		List<Message> consumed = new ArrayList<>();
 		SFTCognition cognition = new SFTCognition(table, consumed::add);
 		cognition.process(
-				pact.getMessages().stream().map(this::toMessage).map(m -> toRelPosition(cognition.messages(), m)));
-		assertThat(filter(consumed), is(asList(message("ball/position/abs", "24.60,45.60"))));
+				toRelPosition(cognition.messages(), pact.getMessages().stream().map(this::toMessage)).stream());
+		assertThat(filter(consumed), is(asList( //
+				message("ball/position/123456789/abs/x", "24.60"), //
+				message("ball/position/123456789/abs/y", "45.60") //
+		)));
 	}
 
 	@Pact(consumer = "cognition")
 	MessagePact relativeBallPositionPact(MessagePactBuilder builder) {
 		return builder //
 				.given("the ball moved on the table") //
-				.expectsToReceive("the relative position gets published") //
-				.withContent(body("0.123" + "," + "0.456")) //
+				.expectsToReceive("the relative x position gets published")
+				.withContent(body("ball/position/123456789/rel/x", "0.123")) //
+				.expectsToReceive("the relative y position gets published")
+				.withContent(body("ball/position/123456789/rel/y", "0.456")) //
 				.toPact();
 	}
 
-	private PactDslJsonBody body(String payload) {
+	private PactDslJsonBody body(String topic, String payload) {
 		return new PactDslJsonBody() //
-				.stringType("topic", "ball/position/rel") //
-				.stringMatcher("payload", "\\d*\\.?\\d+,\\d*\\.?\\d+", payload);
+				.stringType("topic", topic) //
+				.stringMatcher("payload", "\\d*\\.?\\d+", payload);
 	}
 
 	private List<Message> filter(List<Message> messages) {
@@ -72,8 +81,9 @@ class ConsumerPactTest {
 		return message(jsonObject.getString("topic"), jsonObject.getString("payload"));
 	}
 
-	private RelativePosition toRelPosition(Messages messages, Message m) {
-		return messages.isRelativePosition(m) ? messages.parsePosition(m.getPayload()) : null;
+	private List<RelativePosition> toRelPosition(Messages messages, Stream<Message> m) {
+		ToRelPosition toRelPosition = new ToRelPosition(messages);
+		return m.map(toRelPosition).filter(Optional::isPresent).map(Optional::get).collect(toList());
 	}
 
 }

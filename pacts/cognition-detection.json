@@ -41,6 +41,78 @@
           }
         }
       }
+    },
+    {
+      "description": "the relative x position gets published",
+      "metaData": {
+        "contentType": "application/json; charset\u003dUTF-8"
+      },
+      "contents": {
+        "payload": "0.123",
+        "topic": "ball/position/123456789/rel/x"
+      },
+      "providerStates": [
+        {
+          "name": "the ball moved on the table"
+        }
+      ],
+      "matchingRules": {
+        "body": {
+          "$.topic": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ],
+            "combine": "AND"
+          },
+          "$.payload": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "\\d*\\.?\\d+"
+              }
+            ],
+            "combine": "AND"
+          }
+        }
+      }
+    },
+    {
+      "description": "the relative y position gets published",
+      "metaData": {
+        "contentType": "application/json; charset\u003dUTF-8"
+      },
+      "contents": {
+        "payload": "0.456",
+        "topic": "ball/position/123456789/rel/y"
+      },
+      "providerStates": [
+        {
+          "name": "the ball moved on the table"
+        }
+      ],
+      "matchingRules": {
+        "body": {
+          "$.topic": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ],
+            "combine": "AND"
+          },
+          "$.payload": {
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "\\d*\\.?\\d+"
+              }
+            ],
+            "combine": "AND"
+          }
+        }
+      }
     }
   ],
   "metadata": {
