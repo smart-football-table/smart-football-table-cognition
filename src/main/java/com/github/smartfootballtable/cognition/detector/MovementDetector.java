@@ -34,7 +34,9 @@ public class MovementDetector implements Detector {
 	@Override
 	public void detect(AbsolutePosition pos) {
 		RelativePosition relPos = pos.getRelativePosition();
-		if (!relPos.isNull()) {
+		if (relPos.isNull()) {
+			prevPos = null;
+		} else {
 			if (prevPos != null) {
 				Movement movement = new Movement(prevPos, pos, overallDistance.unit());
 				listener.movement(movement, (overallDistance = overallDistance.add(movement.distance())));

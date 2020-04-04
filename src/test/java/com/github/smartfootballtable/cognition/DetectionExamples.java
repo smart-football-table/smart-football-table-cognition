@@ -228,7 +228,7 @@ class DetectionExamples {
 	}
 
 	@Property
-	void ballVelocityMsForArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
+	void ballVelocityMsArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(process(positions, table).filter(topicIs(BALL_VELOCITY_MS)).map(Message::getPayload)
@@ -236,7 +236,7 @@ class DetectionExamples {
 	}
 
 	@Property
-	void ballDistanceForArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
+	void ballDistanceArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(process(positions, table).filter(topicIs(BALL_DISTANCE_CM)).map(Message::getPayload)

@@ -704,6 +704,17 @@ class SFTCognitionTest {
 		thenNoMessageIsSent(m -> m.getTopic().startsWith("ball/velocity/"));
 	}
 
+	@Test
+	void whenBallWasOffTableThereIsNoMovementBetweenPositionBeforeAndAfter() throws Exception {
+		givenATableOfSize(100, 80, CENTIMETER);
+		givenInputToProcessIs(ball().at(upperLeftCorner()) //
+				.then().offTableFor(1, MILLISECONDS) //
+				.then().at(lowerRightCorner()));
+		whenInputWasProcessed();
+		thenNoMessageIsSent(m -> m.getTopic().startsWith("ball/distance/"));
+		thenNoMessageIsSent(m -> m.getTopic().startsWith("ball/velocity/"));
+	}
+
 	public void setInProgressConsumer(Consumer<RelativePosition> inProgressConsumer) {
 		this.inProgressConsumer = inProgressConsumer;
 	}
