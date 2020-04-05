@@ -88,7 +88,7 @@ public abstract class Game {
 		}
 
 		private int[] teamids() {
-			return scores.keySet().stream().sorted().mapToInt(Integer::intValue).toArray();
+			return scores.keySet().stream().mapToInt(Integer::intValue).sorted().toArray();
 		}
 
 	}
