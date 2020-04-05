@@ -539,6 +539,15 @@ class SFTCognitionTest {
 	}
 
 	@Test
+	void doesNotSendFoulWhenBallIsOffTable() throws IOException {
+		givenATableOfAnySize();
+		givenInputToProcessIs(ball().at(anyPos()) //
+				.offTableFor(15, SECONDS).offTableFor(1, SECONDS));
+		whenInputWasProcessed();
+		thenNoMessageWithTopicIsSent("game/foul");
+	}
+
+	@Test
 	void doesSendFoulOnlyOnceUntilFoulIsOver() throws IOException {
 		givenATableOfAnySize();
 		BallPosBuilder middlefieldRow = kickoff().left(0.1);

@@ -105,7 +105,7 @@ public class FoulDetector implements Detector {
 	}
 
 	private boolean xChanged(AbsolutePosition pos) {
-		return xDiff(pos) > MOVEMENT_GREATER_THAN;
+		return pos.isNull() || xDiff(pos) > MOVEMENT_GREATER_THAN;
 	}
 
 	private double xDiff(AbsolutePosition pos) {
