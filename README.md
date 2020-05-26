@@ -7,7 +7,17 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/smart-football-table/smart-football-table-cognition/badge.svg?targetFile=pom.xml)](https://snyk.io/test/github/smart-football-table/smart-football-table-cognition?targetFile=pom.xml)
 [![GitLicense](https://gitlicense.com/badge/smart-football-table/smart-football-table-cognition)](https://gitlicense.com/license/smart-football-table/smart-football-table-cognition)
 
-This repository contains the cognition part of the Smart Football Table project. After getting the position of the ball, calculations are done.  
+This repository contains the cognition part of the Smart Football Table project. Cognition subscribes to the topic for relative ball position. Using the relative ball position calculations are done and the following properties are published: 
+
+- Absolute ball position
+- Game start/game end
+- Ball's current speed
+- Ball's covered distance
+- Goals
+- Fouls
+- Scoring team
+- Teams' scores
+- Idle table
 
 Visit the documentation at the [Smart Football Table](https://smart-football-table.github.io/services/ball-cognition/) website for more information.
 
