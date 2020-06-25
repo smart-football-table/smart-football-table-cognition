@@ -182,7 +182,7 @@ class SFTCognitionTest {
 		}
 
 		private TimestampedMessage makeMessage(Object x, Object y) {
-			return new TimestampedMessage(timestamp, message("ball/position/rel", x + "," + y));
+			return new TimestampedMessage(timestamp, message("ball/position/rel", timestamp + "," + x + "," + y));
 		}
 
 		private StdInBuilder prepareForLeftGoal() {
@@ -560,57 +560,6 @@ class SFTCognitionTest {
 		);
 		whenInputWasProcessed();
 		assertOneMessageWithPayload(messagesWithTopic("game/foul"), is(""));
-	}
-
-	@Test
-	void xxxxxxxxxxxxxxxxxxxxx() throws IOException {
-		givenATableOfAnySize();
-		givenInputToProcessIs(ball().at(pos(0.7771, 0.225)).at(pos(0.6745, 0.742)).at(pos(0.2981, 0.7105))
-				.at(pos(0.8642, 0.3165)).at(pos(0.7126, 0.8632)).at(pos(0.5887, 0.4963)).at(pos(0.2018, 0.4247))
-				.at(pos(0.3222, 0.4728)).at(pos(0.5949, 0.7033)).at(pos(0.6385, 0.812)).at(pos(0.546, 0.2182))
-				.at(pos(0.223, 0.2909)).at(pos(0.6784, 0.1901)).at(pos(0.8643, 0.7832)).at(pos(0.7021, 0.6670))
-				.at(pos(0.1355, 0.5055)).at(pos(0.1633, 0.2610)).at(pos(0.823, 0.8238)).at(pos(0.9124, 0.1246))
-				.at(pos(0.9197, 0.2244)).at(pos(0.3197, 0.5848)).at(pos(0.7035, 0.8863)).at(pos(0.1094, 0.835))
-				.at(pos(0.5526, 0.7163)).at(pos(0.3498, 0.8642)).at(pos(0.3626, 0.286)).at(pos(0.2881, 0.3795))
-				.at(pos(0.8860, 0.6508)).at(pos(0.4871, 0.7013)).at(pos(0.5838, 0.7862)).at(pos(0.1672, 0.8984))
-				.at(pos(0.315, 0.3563)).at(pos(0.6264, 0.7892)).at(pos(0.8147, 0.4760)).at(pos(0.3309, 0.9096))
-				.at(pos(0.3422, 0.8174)).at(pos(0.4017, 0.8554)).at(pos(0.175, 0.317)).at(pos(0.11, 0.2116))
-				.at(pos(0.376, 0.265)).at(pos(0.3130, 0.150)).at(pos(0.9302, 0.3194)).at(pos(0.5743, 0.2503))
-				.at(pos(0.5837, 0.304)).at(pos(0.8106, 0.4151)).at(pos(0.9094, 0.9044)).at(pos(0.2544, 0.1005))
-				.at(pos(0.8110, 0.1248)).at(offTable()).at(pos(0.3630, 0.651)).at(pos(0.8578, 0.7540))
-				.at(pos(0.2092, 0.8673)).at(pos(0.4301, 0.8996)).at(pos(0.6657, 0.937)).at(pos(0.6562, 0.5461))
-				.at(pos(0.6106, 0.3745)).at(pos(0.9826, 0.194)).at(pos(0.1446, 0.9258)).at(pos(0.1524, 0.2821))
-				.at(pos(0.418, 0.9588)).at(pos(0.7483, 0.8475)).at(pos(0.3982, 0.3162)).at(pos(0.7410, 0.7332))
-				.at(pos(0.4536, 0.8592)).at(pos(0.1012, 0.8398)).at(pos(0.7519, 0.5052)).at(pos(0.4906, 0.8832))
-				.at(pos(0.8712, 0.2668)).at(pos(0.798, 0.4441)).at(pos(0.5719, 0.4279)).at(pos(0.3479, 0.9445))
-				.at(pos(0.3501, 0.423)).at(pos(0.1299, 0.3791)).at(pos(0.168, 0.9788)).at(pos(0.22, 0.2689))
-				.at(pos(0.1388, 0.3936)).at(pos(0.1340, 0.8944)).at(pos(0.5776, 0.6254)).at(pos(0.1396, 0.2317))
-				.at(pos(0.3692, 0.4205)).at(pos(0.652, 0.9461)).at(pos(0.455, 0.6497)).at(pos(0.10, 0.3679))
-				.at(pos(0.2430, 0.3714)).at(pos(0.6735, 0.1598)).at(pos(0.129, 0.1335)).at(pos(0.8791, 0.5878))
-				.at(pos(0.8555, 0.4379)).at(pos(0.5650, 0.6045)).at(pos(0.2589, 0.1616)).at(pos(0.2393, 0.9541))
-				.at(pos(0.5695, 0.777)).at(pos(0.7440, 0.8501)).at(pos(0.6360, 0.6130)).at(pos(0.5668, 0.8577))
-				.at(pos(0.5314, 0.2468)).at(pos(0.8373, 0.699)).at(pos(0.9886, 0.5590)).at(pos(0.6448, 0.9982))
-				.at(pos(0.1822, 0.3160)).at(pos(0.5537, 0.3418)).at(pos(0.7809, 0.5843)).at(pos(0.4115, 0.6929))
-				.at(pos(0.6363, 0.4745)).at(pos(0.4401, 0.2044)).at(pos(0.1318, 0.5941)).at(pos(0.769, 0.7817))
-				.at(pos(0.1390, 0.4022)).at(pos(0.8546, 0.4429)).at(pos(0.2665, 0.5373)).at(pos(0.9393, 0.7314))
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable())
-				.at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()).at(offTable()));
-		whenInputWasProcessed();
-		fail();
 	}
 
 	@Test
