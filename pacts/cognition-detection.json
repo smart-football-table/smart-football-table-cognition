@@ -12,7 +12,7 @@
         "contentType": "application/json; charset\u003dUTF-8"
       },
       "contents": {
-        "payload": "0.123,0.456",
+        "payload": "123456789012345678,0.123,0.456",
         "topic": "ball/position/rel"
       },
       "providerStates": [
@@ -34,7 +34,7 @@
             "matchers": [
               {
                 "match": "regex",
-                "regex": "\\d*\\.?\\d+,\\d*\\.?\\d+"
+                "regex": "\\d+,\\d*\\.?\\d+,\\d*\\.?\\d+"
               }
             ],
             "combine": "AND"

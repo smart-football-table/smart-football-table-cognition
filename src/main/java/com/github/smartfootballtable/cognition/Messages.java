@@ -170,11 +170,12 @@ public class Messages {
 
 	public RelativePosition parsePosition(String payload) {
 		String[] coords = payload.split("\\,");
-		if (coords.length == 2) {
-			Double x = toDouble(coords[0]);
-			Double y = toDouble(coords[1]);
+		if (coords.length == 3) {
+			Long timestamp = toLong(coords[0]);
+			Double x = toDouble(coords[1]);
+			Double y = toDouble(coords[2]);
 			if (x != null && y != null) {
-				return RelativePosition.create(System.currentTimeMillis(), x, y);
+				return RelativePosition.create(timestamp, x, y);
 			}
 		}
 		return null;
@@ -186,6 +187,14 @@ public class Messages {
 		}
 		publishTeamScore(teamid, newScore);
 		teamsEverScored.add(teamid);
+	}
+
+	private static Long toLong(String val) {
+		try {
+			return Long.valueOf(val);
+		} catch (NumberFormatException e) {
+			return null;
+		}
 	}
 
 	private static Double toDouble(String val) {

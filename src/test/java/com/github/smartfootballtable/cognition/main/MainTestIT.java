@@ -202,7 +202,7 @@ class MainTestIT {
 	@Test
 	void doesPublishAbsWhenReceivingRel() {
 		assertTimeoutPreemptively(timeout, () -> {
-			publish("ball/position/rel", "0.123,0.456");
+			publish("ball/position/rel", "123456789012345678,0.123,0.456");
 			await().until(() -> payloads(secondClient.getReceived(), "ball/position/abs"), is(asList("14.76,31.01")));
 		});
 	}
@@ -307,7 +307,7 @@ class MainTestIT {
 
 	private void publish(RelativePosition position) {
 		try {
-			publish("ball/position/rel", position.getX() + "," + position.getY());
+			publish("ball/position/rel", position.getTimestamp() + "," + position.getX() + "," + position.getY());
 		} catch (MqttException e) {
 			throw new RuntimeException(e);
 		}

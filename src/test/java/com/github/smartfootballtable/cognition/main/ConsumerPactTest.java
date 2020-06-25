@@ -53,14 +53,22 @@ class ConsumerPactTest {
 		return builder //
 				.given("the ball moved on the table") //
 				.expectsToReceive("the relative position gets published") //
-				.withContent(body("0.123" + "," + "0.456")) //
+				.withContent(body("123456789012345678" + "," + "0.123" + "," + "0.456")) //
 				.toPact();
 	}
 
 	private PactDslJsonBody body(String payload) {
 		return new PactDslJsonBody() //
 				.stringType("topic", "ball/position/rel") //
-				.stringMatcher("payload", "\\d*\\.?\\d+,\\d*\\.?\\d+", payload);
+				.stringMatcher("payload", longValue() + "," + floatingPoint() + "," + floatingPoint(), payload);
+	}
+
+	private static String longValue() {
+		return "\\d+";
+	}
+
+	private static String floatingPoint() {
+		return "\\d*\\.?\\d+";
 	}
 
 	private List<Message> filter(List<Message> messages) {
