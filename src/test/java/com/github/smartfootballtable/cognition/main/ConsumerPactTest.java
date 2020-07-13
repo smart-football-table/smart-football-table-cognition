@@ -56,15 +56,16 @@ class ConsumerPactTest {
 	private PactDslJsonBody body(String payload) {
 		return new PactDslJsonBody() //
 				.stringType("topic", "ball/position/rel") //
-				.stringMatcher("payload", longValue() + "," + floatingPoint() + "," + floatingPoint(), payload);
+				.stringMatcher("payload",
+						positiveLongValue() + "," + positiveFloatingPoint() + "," + positiveFloatingPoint(), payload);
 	}
 
-	private static String longValue() {
-		return "\\d+";
+	private static String positiveLongValue() {
+		return "[0-9]+";
 	}
 
-	private static String floatingPoint() {
-		return "\\d*\\.?\\d+";
+	private static String positiveFloatingPoint() {
+		return positiveLongValue() + "(?:\\.[0-9]+)?";
 	}
 
 	private List<Message> filter(List<Message> messages) {
