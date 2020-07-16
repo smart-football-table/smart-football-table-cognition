@@ -2,7 +2,6 @@ package com.github.smartfootballtable.cognition.mqtt;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -13,11 +12,9 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
 
 import com.github.smartfootballtable.cognition.queue.QueueConsumer;
 
-@Timeout(value = 20, unit = SECONDS)
 class QueueConsumerTest {
 
 	@Test

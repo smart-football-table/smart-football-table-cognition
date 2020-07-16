@@ -13,29 +13,29 @@
 		<image>docker.io/smart-football-table/${project.artifactId}:latest</image>
 	</properties>
 
-        <profiles>
+	<profiles>
 		<profile>
-                        <id>x86</id>
-                        <properties>
-                                <baseimage>gcr.io/distroless/java:11</baseimage>
-                        </properties>
-                        <activation>
-                                <activeByDefault>true</activeByDefault>
-                        </activation>
-                </profile>
-                <profile>
-                        <id>aarch64</id>
-                        <properties>
-                                <baseimage>arm64v8/openjdk:11-slim</baseimage>
-                        </properties>
-                        <activation>
-                                <os>
-                                        <family>unix</family>
-                                        <arch>aarch64</arch>
-                                </os>
-                        </activation>
-                </profile>
-        </profiles>
+			<id>x86</id>
+			<properties>
+				<baseimage>gcr.io/distroless/java:11</baseimage>
+			</properties>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+		</profile>
+		<profile>
+			<id>aarch64</id>
+			<properties>
+				<baseimage>arm64v8/openjdk:11-slim</baseimage>
+			</properties>
+			<activation>
+				<os>
+					<family>unix</family>
+					<arch>aarch64</arch>
+				</os>
+			</activation>
+		</profile>
+	</profiles>
 
 	<dependencies>
 		<dependency>
@@ -108,8 +108,8 @@
 				<version>1.5.1</version>
 				<configuration>
 					<from>
-                                              <image>${baseimage}</image>
-                                        </from>
+						<image>${baseimage}</image>
+					</from>
 					<container>
 						<mainClass>com.github.smartfootballtable.cognition.main.Main</mainClass>
 						<useCurrentTimestamp>true</useCurrentTimestamp>
@@ -134,6 +134,9 @@
 					</includes>
 					<groups>!in-progress</groups>
 					<excludedGroups>pbt</excludedGroups>
+					<systemPropertyVariables>
+						<junit.jupiter.execution.timeout.default>1m</junit.jupiter.execution.timeout.default>
+					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 			<plugin>
