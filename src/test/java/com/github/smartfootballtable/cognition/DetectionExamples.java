@@ -24,7 +24,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
-import static net.jqwik.api.Arbitraries.constant;
+import static net.jqwik.api.Arbitraries.just;
 import static net.jqwik.api.Arbitraries.doubles;
 import static net.jqwik.api.Arbitraries.frequency;
 import static net.jqwik.api.Arbitraries.integers;
@@ -707,7 +707,7 @@ class DetectionExamples {
 
 	static class GameSequenceBuilder {
 
-		private Arbitrary<Long> samplingFrequency = constant(10L);
+		private Arbitrary<Long> samplingFrequency = just(10L);
 		private List<PositionSequenceBuilder> sequences = new ArrayList<>();
 
 		static GameSequenceBuilder gameSequence() {
@@ -719,7 +719,7 @@ class DetectionExamples {
 		}
 
 		GameSequenceBuilder withSamplingFrequency(long samplingFrequencyMillis) {
-			return withSamplingFrequency(constant(samplingFrequencyMillis));
+			return withSamplingFrequency(just(samplingFrequencyMillis));
 		}
 
 		GameSequenceBuilder withSamplingFrequency(Arbitrary<Long> samplingFrequency) {
@@ -733,7 +733,7 @@ class DetectionExamples {
 		}
 
 		private Arbitrary<List<RelativePosition>> build() {
-			return build(constant(0L));
+			return build(just(0L));
 		}
 
 		private Arbitrary<List<RelativePosition>> build(Arbitrary<Long> initialTimestampArbitrary) {
@@ -764,14 +764,14 @@ class DetectionExamples {
 		public static final long DEFAULT_DURATION = SECONDS.toMillis(1);
 
 		private final Arbitrary<Function<Long, RelativePosition>> positionCreatorArbitrary;
-		private Arbitrary<Long> durationArbitrary = Arbitraries.constant(DEFAULT_DURATION);
+		private Arbitrary<Long> durationArbitrary = just(DEFAULT_DURATION);
 
 		public PositionSequenceBuilder(Arbitrary<Function<Long, RelativePosition>> positionCreatorArbitrary) {
 			this.positionCreatorArbitrary = positionCreatorArbitrary;
 		}
 
 		public PositionSequenceBuilder forDuration(long duration, TimeUnit timeUnit) {
-			return forDuration(Arbitraries.constant(duration), timeUnit);
+			return forDuration(just(duration), timeUnit);
 		}
 
 		public PositionSequenceBuilder forDuration(Arbitrary<Long> durationArbitrary, TimeUnit timeUnit) {
