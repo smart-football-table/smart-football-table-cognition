@@ -48,7 +48,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
-import com.github.smartfootballtable.cognition.mqtt.MqttConsumer;
+import com.github.smartfootballtable.cognition.mqtt.MqttAdapter;
 
 import io.moquette.server.Server;
 import io.moquette.server.config.MemoryConfig;
@@ -162,8 +162,8 @@ class MainTestIT {
 			}
 		});
 		await().until(() -> {
-			MqttConsumer consumer = main.mqttConsumer();
-			return consumer != null && consumer.isConnected();
+			MqttAdapter adapter = main.mqttAdapter();
+			return adapter != null && adapter.isConnected();
 		});
 	}
 
@@ -224,7 +224,7 @@ class MainTestIT {
 			muteSystemErr(() -> {
 				restartBroker();
 				await().until(secondClient::isConnected);
-				await().until(main.mqttConsumer()::isConnected);
+				await().until(main.mqttAdapter()::isConnected);
 			});
 			assertReceivesGameStartWhenSendingReset();
 		});

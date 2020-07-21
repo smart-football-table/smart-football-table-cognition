@@ -21,12 +21,12 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import com.github.smartfootballtable.cognition.MessageProvider;
 import com.github.smartfootballtable.cognition.data.Message;
 
-public class MqttConsumer implements Consumer<Message>, MessageProvider, Closeable {
+public class MqttAdapter implements Consumer<Message>, MessageProvider, Closeable {
 
 	private final MqttClient mqttClient;
 	private final List<Consumer<Message>> consumers = new CopyOnWriteArrayList<>();
 
-	public MqttConsumer(String host, int port) throws IOException {
+	public MqttAdapter(String host, int port) throws IOException {
 		try {
 			mqttClient = new MqttClient("tcp://" + host + ":" + port, getClass().getName(), new MemoryPersistence());
 			mqttClient.setTimeToWait(SECONDS.toMillis(1));
