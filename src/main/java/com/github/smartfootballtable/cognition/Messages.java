@@ -139,14 +139,17 @@ public class Messages {
 
 	private void publish(Message message) {
 		consumer.accept(message);
-		boolean retained = message.isRetained();
-		if (retained) {
+		if (message.isRetained()) {
 			retainedTopics.add(message.getTopic());
 		}
 	}
 
 	public void clearRetained() {
-		retainedTopics.forEach(t -> publish(retainedMessage(t, "")));
+		retainedTopics.forEach(this::clearTopic);
+	}
+
+	private void clearTopic(String topic) {
+		publish(retainedMessage(topic, ""));
 	}
 
 	public boolean isReset(Message message) {
