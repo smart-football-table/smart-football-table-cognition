@@ -3,7 +3,7 @@
 [ -z "$HOST" ] && HOST=localhost
 
 publish() {
-	TIMESTAMP=`date +%s`
+	TIMESTAMP=`date +%s%3N`
 	mosquitto_pub -h $HOST -t 'ball/position/rel' -m "$TIMESTAMP,$1"
 	sleep 0.04
 }
