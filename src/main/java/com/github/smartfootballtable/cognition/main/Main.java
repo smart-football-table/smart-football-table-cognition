@@ -2,7 +2,6 @@ package com.github.smartfootballtable.cognition.main;
 
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
 import static com.github.smartfootballtable.cognition.main.EnvVars.envVarsAndArgs;
-import static com.github.smartfootballtable.cognition.main.MqttProcessor.processMqtt;
 import static org.kohsuke.args4j.OptionHandlerFilter.ALL;
 import static org.kohsuke.args4j.ParserProperties.defaults;
 
@@ -67,7 +66,7 @@ public class Main {
 		mqttConsumer = newMqttConsumer();
 		cognition = newCognition(mqttConsumer);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownHook()));
-		processMqtt(cognition, mqttConsumer);
+		QueueWorker.consumeViaQueue(cognition, mqttConsumer);
 	}
 
 	private SFTCognition newCognition(MqttConsumer mqttConsumer) {
