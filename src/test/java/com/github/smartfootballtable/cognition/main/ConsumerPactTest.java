@@ -1,6 +1,8 @@
 package com.github.smartfootballtable.cognition.main;
 
 import static au.com.dius.pact.consumer.junit5.ProviderType.ASYNCH;
+import static com.github.smartfootballtable.cognition.MessageMother.TOPIC_BALL_POSITION_REL;
+import static com.github.smartfootballtable.cognition.MessageMother.absolutePosition;
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
 import static java.util.Arrays.asList;
@@ -41,7 +43,7 @@ class ConsumerPactTest {
 		SFTCognition cognition = new SFTCognition(table, consumed::add);
 		pact.getMessages().stream().map(this::toMessage).map(m -> toRelPosition(cognition.messages(), m))
 				.forEach(cognition::process);
-		assertThat(filter(consumed), is(asList(message("ball/position/abs", "24.60,45.60"))));
+		assertThat(filter(consumed), is(asList(absolutePosition("24.60", "45.60"))));
 	}
 
 	@Pact(consumer = "cognition")
@@ -55,7 +57,8 @@ class ConsumerPactTest {
 
 	private PactDslJsonBody body(String payload) {
 		return new PactDslJsonBody() //
-				.stringType("topic", "ball/position/rel") //
+				.stringValue("topic",
+						TOPIC_BALL_POSITION_REL) //
 				.stringMatcher("payload",
 						positiveLongValue() + "," + positiveFloatingPoint() + "," + positiveFloatingPoint(), payload);
 	}

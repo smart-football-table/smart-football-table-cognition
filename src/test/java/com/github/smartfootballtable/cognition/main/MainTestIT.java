@@ -1,5 +1,7 @@
 package com.github.smartfootballtable.cognition.main;
 
+import static com.github.smartfootballtable.cognition.MessageMother.TOPIC_BALL_POSITION_ABS;
+import static com.github.smartfootballtable.cognition.MessageMother.relativePosition;
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.create;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.noPosition;
@@ -46,6 +48,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.github.smartfootballtable.cognition.MessageMother;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.mqtt.MqttAdapter;
@@ -202,8 +205,9 @@ class MainTestIT {
 	@Test
 	void doesPublishAbsWhenReceivingRel() {
 		assertTimeoutPreemptively(timeout, () -> {
-			publish("ball/position/rel", "123456789012345678,0.123,0.456");
-			await().until(() -> payloads(secondClient.getReceived(), "ball/position/abs"), is(asList("14.76,31.01")));
+			publish(relativePosition());
+			await().until(() -> payloads(secondClient.getReceived(), TOPIC_BALL_POSITION_ABS),
+					is(asList("14.76,31.01")));
 		});
 	}
 
@@ -307,10 +311,14 @@ class MainTestIT {
 
 	private void publish(RelativePosition position) {
 		try {
-			publish("ball/position/rel", position.getTimestamp() + "," + position.getX() + "," + position.getY());
+			publish(relativePosition(position.getTimestamp(), position.getX(), position.getY()));
 		} catch (MqttException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private void publish(Message message) throws MqttException, MqttPersistenceException {
+		publish(message.getTopic(), message.getPayload());
 	}
 
 	private void publish(String topic, String payload) throws MqttException, MqttPersistenceException {

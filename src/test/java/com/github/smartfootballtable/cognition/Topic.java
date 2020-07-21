@@ -1,13 +1,16 @@
 package com.github.smartfootballtable.cognition;
 
+import static com.github.smartfootballtable.cognition.MessageMother.TOPIC_BALL_POSITION_ABS;
+import static com.github.smartfootballtable.cognition.MessageMother.TOPIC_BALL_POSITION_REL;
+
 import java.util.function.Predicate;
 
 import com.github.smartfootballtable.cognition.data.Message;
 
 public enum Topic {
 
-	BALL_POSITION_ABS(topicStartsWith("ball/position/abs")), //
-	BALL_POSITION_REL(topicStartsWith("ball/position/rel")), //
+	BALL_POSITION_ABS(topicStartsWith(TOPIC_BALL_POSITION_ABS)), //
+	BALL_POSITION_REL(topicStartsWith(TOPIC_BALL_POSITION_REL)), //
 	BALL_DISTANCE_CM(topicStartsWith("ball/distance/cm")), //
 	BALL_OVERALL_DISTANCE_CM(topicStartsWith("ball/distance/overall/cm")), //
 	BALL_VELOCITY_KMH(topicStartsWith("ball/velocity/kmh")), //

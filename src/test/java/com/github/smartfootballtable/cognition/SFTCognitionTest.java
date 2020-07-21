@@ -1,5 +1,7 @@
 package com.github.smartfootballtable.cognition;
 
+import static com.github.smartfootballtable.cognition.MessageMother.TOPIC_BALL_POSITION_ABS;
+import static com.github.smartfootballtable.cognition.MessageMother.relativePosition;
 import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.ball;
 import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.frontOfLeftGoal;
 import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.frontOfRightGoal;
@@ -181,7 +183,7 @@ class SFTCognitionTest {
 		}
 
 		private TimestampedMessage makeMessage(Object x, Object y) {
-			return new TimestampedMessage(timestamp, message("ball/position/rel", timestamp + "," + x + "," + y));
+			return new TimestampedMessage(timestamp, relativePosition(timestamp, x, y));
 		}
 
 		private StdInBuilder prepareForLeftGoal() {
@@ -769,7 +771,7 @@ class SFTCognitionTest {
 	}
 
 	private void thenTheAbsolutePositionOnTheTableIsPublished(String x, String y) {
-		assertOneMessageWithPayload(messagesWithTopic("ball/position/abs"), is(makePayload(x, y)));
+		assertOneMessageWithPayload(messagesWithTopic(TOPIC_BALL_POSITION_ABS), is(makePayload(x, y)));
 	}
 
 	private void thenGoalForTeamIsPublished(int teamid) {

@@ -1,5 +1,6 @@
 package com.github.smartfootballtable.cognition.queue;
 
+import static com.github.smartfootballtable.cognition.MessageMother.relativePosition;
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.stefanbirkner.systemlambda.SystemLambda.tapSystemErr;
 import static io.moquette.BrokerConstants.HOST_PROPERTY_NAME;
@@ -113,13 +114,13 @@ class MqttAdapterTest {
 	@Test
 	void stacktraceIsPrintedOnStdErrAndSecondConsumerIsCalled() throws Exception {
 		String exceptionText = "any " + UUID.randomUUID() + "text";
-		Message message = message("ball/position/rel", "123456789012345678,0.123,0.456");
 		assertThat(tapSystemErr(() -> {
 			List<Message> messages = new ArrayList<>();
 			mqttAdapter.addConsumer(aConsumerThatThrows(() -> new NullPointerException(exceptionText)));
 			mqttAdapter.addConsumer(aConsumerThatCollectsTo(messages));
-			secondClient.publish(message.getTopic(), message.getPayload().getBytes(), 0, false);
-			await().untilAsserted(() -> assertThat(messages, is(Arrays.asList(message))));
+			Message relativePosition = relativePosition();
+			secondClient.publish(relativePosition.getTopic(), relativePosition.getPayload().getBytes(), 0, false);
+			await().untilAsserted(() -> assertThat(messages, is(Arrays.asList(relativePosition))));
 		}), containsString(exceptionText));
 	}
 
