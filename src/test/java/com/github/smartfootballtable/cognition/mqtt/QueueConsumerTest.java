@@ -20,7 +20,7 @@ class QueueConsumerTest {
 	@Test
 	void singleElementInQueueOfSize1() throws InterruptedException {
 		List<String> strings = new ArrayList<>();
-		queue(addTo(strings), 1).accept("test");
+		consumeFromSut(addTo(strings), 1).accept("test");
 		TimeUnit.MILLISECONDS.sleep(50);
 		assertThat(strings, is(asList("test")));
 	}
@@ -29,7 +29,7 @@ class QueueConsumerTest {
 	void whenBlockingWillAcceptAsManyElementsAsTheQueueHasSize() throws InterruptedException {
 		int queueSize = 10;
 		List<String> strings = new ArrayList<>();
-		Consumer<String> queued = queue(sleep().andThen(addTo(strings)), queueSize);
+		Consumer<String> queued = consumeFromSut(sleep().andThen(addTo(strings)), queueSize);
 		fillQueue(queued, queueSize);
 		TimeUnit.MILLISECONDS.sleep(50);
 		assertThat(strings, is(emptyList()));
@@ -39,7 +39,7 @@ class QueueConsumerTest {
 	void whenBlockingAndTheQueueIsFullNoMoreElementsAreAccepted() throws InterruptedException {
 		int queueSize = 10;
 		List<String> strings = new ArrayList<>();
-		Consumer<String> queued = queue(sleep().andThen(addTo(strings)), queueSize);
+		Consumer<String> queued = consumeFromSut(sleep().andThen(addTo(strings)), queueSize);
 		fillQueue(queued, queueSize);
 
 		Thread backgroundAdder = new Thread(() -> queued.accept("adding-last-element"));
@@ -67,7 +67,7 @@ class QueueConsumerTest {
 		return strings::add;
 	}
 
-	private <T> Consumer<T> queue(Consumer<T> consumer, int queueSize) {
+	private <T> Consumer<T> consumeFromSut(Consumer<T> consumer, int queueSize) {
 		return new QueueConsumer<T>(consumer, queueSize);
 	}
 
