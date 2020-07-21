@@ -22,14 +22,6 @@
       ],
       "matchingRules": {
         "body": {
-          "$.topic": {
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ],
-            "combine": "AND"
-          },
           "$.payload": {
             "matchers": [
               {
