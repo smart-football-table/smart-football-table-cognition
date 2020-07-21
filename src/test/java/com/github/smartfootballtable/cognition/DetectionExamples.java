@@ -292,7 +292,8 @@ class DetectionExamples {
 
 	private Stream<Message> process(List<RelativePosition> positions, Table table) {
 		List<Message> messages = new ArrayList<>();
-		new SFTCognition(table, messages::add).process(positions.stream());
+		SFTCognition sftCognition = new SFTCognition(table, messages::add);
+		positions.stream().forEach(sftCognition::process);
 		return messages.stream();
 	}
 

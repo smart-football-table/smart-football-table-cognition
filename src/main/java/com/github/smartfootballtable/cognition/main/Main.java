@@ -11,6 +11,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
+import com.github.smartfootballtable.cognition.Messages;
 import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
@@ -66,7 +67,12 @@ public class Main {
 		mqttAdapter = newMqttAdapter();
 		cognition = newCognition(mqttAdapter);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownHook()));
-		QueueWorker.consumeViaQueue(cognition, mqttAdapter);
+		Messages messages = cognition.messages();
+		mqttAdapter.addConsumer(m -> {
+			if (messages.isRelativePosition(m)) {
+				cognition.process(messages.parsePosition(m.getPayload()));
+			}
+		});
 	}
 
 	private SFTCognition newCognition(MqttAdapter mqttAdapter) {

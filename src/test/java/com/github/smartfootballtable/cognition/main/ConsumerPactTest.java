@@ -39,8 +39,8 @@ class ConsumerPactTest {
 		Table table = new Table(200, 100, CENTIMETER);
 		List<Message> consumed = new ArrayList<>();
 		SFTCognition cognition = new SFTCognition(table, consumed::add);
-		cognition.process(
-				pact.getMessages().stream().map(this::toMessage).map(m -> toRelPosition(cognition.messages(), m)));
+		pact.getMessages().stream().map(this::toMessage).map(m -> toRelPosition(cognition.messages(), m))
+				.forEach(cognition::process);
 		assertThat(filter(consumed), is(asList(message("ball/position/abs", "24.60,45.60"))));
 	}
 

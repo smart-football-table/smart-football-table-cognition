@@ -29,9 +29,9 @@ public class ReadPythonOutputFromFileMain {
 
 		try (BufferedReader reader = new BufferedReader(
 				new InputStreamReader(new FileInputStream(new File("python_output_opencv.txt"))))) {
-			new SFTCognition(new Table(120, 68, CENTIMETER), sysout)
-					.withGoalConfig(new GoalDetector.Config().frontOfGoalPercentage(40))
-					.process(reader.lines().map(fromPythonFormat()));
+			SFTCognition cognition = new SFTCognition(new Table(120, 68, CENTIMETER), sysout)
+					.withGoalConfig(new GoalDetector.Config().frontOfGoalPercentage(40));
+			reader.lines().map(fromPythonFormat()).forEach(cognition::process);
 		}
 	}
 

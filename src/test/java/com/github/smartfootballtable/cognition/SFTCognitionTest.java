@@ -754,7 +754,7 @@ class SFTCognitionTest {
 
 	void whenInputWasProcessed() throws IOException {
 		sut = sut.withGoalConfig(goalDetectorConfig);
-		sut.process(inputMessages.stream().map(this::toPosition).peek(inProgressConsumer));
+		inputMessages.stream().map(this::toPosition).peek(inProgressConsumer).forEach(sut::process);
 		inputMessages.clear();
 	}
 
