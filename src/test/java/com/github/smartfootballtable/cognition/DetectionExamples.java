@@ -70,13 +70,13 @@ import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
 import net.jqwik.api.ShrinkingMode;
-import net.jqwik.api.Statistics;
 import net.jqwik.api.Tag;
 import net.jqwik.api.Tuple;
 import net.jqwik.api.Tuple.Tuple2;
 import net.jqwik.api.arbitraries.DoubleArbitrary;
 import net.jqwik.api.arbitraries.LongArbitrary;
 import net.jqwik.api.arbitraries.SizableArbitrary;
+import net.jqwik.api.statistics.Statistics;
 
 @Tag("pbt")
 class DetectionExamples {
