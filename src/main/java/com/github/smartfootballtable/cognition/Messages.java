@@ -114,18 +114,7 @@ public class Messages {
 	}
 
 	private void publishTeamScore(int teamid, int score) {
-		gameScore(teamid, score);
 		publish(retainedMessage("team/score/" + teamid, score));
-	}
-
-	/**
-	 * Will be removed in future versions
-	 * 
-	 * @deprecated replaces by team/score/$id
-	 */
-	@Deprecated
-	private void gameScore(int teamid, int score) {
-		publish(message("game/score/" + teamid, score));
 	}
 
 	public void foul() {

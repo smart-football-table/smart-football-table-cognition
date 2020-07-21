@@ -586,13 +586,7 @@ class SFTCognitionTest {
 		);
 		whenInputWasProcessed();
 
-		Predicate<Message> deprecatedTopic = m -> m.getTopic().startsWith("game/score/");
-		assertThat("The deprecated topic no more is sent. Please remove the filtering predicate",
-				collectedMessages.stream().filter(deprecatedTopic).anyMatch(deprecatedTopic), is(true));
-
-		assertThat(
-				collectedMessages(m -> !m.getTopic().startsWith("ball/")).filter(deprecatedTopic.negate())
-						.collect(toList()), //
+		assertThat(collectedMessages(m -> !m.getTopic().startsWith("ball/")).collect(toList()), //
 				is(asList( //
 						message("game/start", ""), //
 						message("team/scored", 0), //
@@ -701,9 +695,7 @@ class SFTCognitionTest {
 		// when resetting the game the game/start message is sent immediately as
 		// well when the ball is then detected at the middle line
 		thenPayloadsWithTopicAre("game/start", times("", 2));
-		thenPayloadsWithTopicAre("game/score/1", "1", "2");
 		thenPayloadsWithTopicAre("team/score/1", "1", "2");
-		thenPayloadsWithTopicAre("game/score/0", "0", "0");
 		thenPayloadsWithTopicAre("team/score/0", "0", "0");
 	}
 
