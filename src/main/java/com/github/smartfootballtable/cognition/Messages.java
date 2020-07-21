@@ -169,12 +169,12 @@ public class Messages {
 	}
 
 	public RelativePosition parsePosition(String payload) {
-		String[] coords = payload.split("\\,");
-		if (coords.length == 3) {
-			Long timestamp = toLong(coords[0]);
-			Double x = toDouble(coords[1]);
-			Double y = toDouble(coords[2]);
-			if (x != null && y != null) {
+		String[] values = payload.split("\\,");
+		if (values.length == 3) {
+			Long timestamp = toLong(values[0]);
+			Double x = toDouble(values[1]);
+			Double y = toDouble(values[2]);
+			if (timestamp != null && x != null && y != null) {
 				return RelativePosition.create(timestamp, x, y);
 			}
 		}
