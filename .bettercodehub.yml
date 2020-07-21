@@ -1,4 +1,4 @@
 exclude:
-- /utils/*
-- /.mvn/*
+- /utils/.*
+- /\.mvn/.*
 
