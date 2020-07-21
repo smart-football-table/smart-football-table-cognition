@@ -46,6 +46,9 @@ class ConsumerPactTest {
 		assertThat(filter(consumed), is(asList(absolutePosition("24.60", "45.60"))));
 	}
 
+//	String date = "2020-07-21T18:42:24.123456";
+//	System.out.println(DateTime.parse(date).getMillis());
+
 	@Pact(consumer = "cognition")
 	MessagePact relativeBallPositionPact(MessagePactBuilder builder) {
 		return builder //
@@ -57,8 +60,7 @@ class ConsumerPactTest {
 
 	private PactDslJsonBody body(String payload) {
 		return new PactDslJsonBody() //
-				.stringValue("topic",
-						TOPIC_BALL_POSITION_REL) //
+				.stringValue("topic", TOPIC_BALL_POSITION_REL) //
 				.stringMatcher("payload",
 						positiveLongValue() + "," + positiveFloatingPoint() + "," + positiveFloatingPoint(), payload);
 	}
