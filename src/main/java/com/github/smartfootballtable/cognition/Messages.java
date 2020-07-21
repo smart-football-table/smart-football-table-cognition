@@ -161,11 +161,11 @@ public class Messages {
 	}
 
 	public boolean isReset(Message message) {
-		return message.getTopic().equals(GAME_RESET);
+		return message.isTopic(GAME_RESET);
 	}
 
 	public boolean isRelativePosition(Message message) {
-		return message.getTopic().equals(BALL_POSITION_REL);
+		return message.isTopic(BALL_POSITION_REL);
 	}
 
 	public RelativePosition parsePosition(String payload) {

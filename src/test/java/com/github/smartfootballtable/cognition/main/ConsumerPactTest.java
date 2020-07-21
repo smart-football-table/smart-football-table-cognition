@@ -69,7 +69,7 @@ class ConsumerPactTest {
 	}
 
 	private List<Message> filter(List<Message> messages) {
-		return messages.stream().filter(m -> !m.getTopic().equals("game/start")).collect(toList());
+		return messages.stream().filter(m -> !m.isTopic("game/start")).collect(toList());
 	}
 
 	private Message toMessage(au.com.dius.pact.core.model.messaging.Message message) {

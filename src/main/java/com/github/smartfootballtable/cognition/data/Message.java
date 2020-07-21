@@ -34,6 +34,10 @@ public class Message {
 		return retained;
 	}
 
+	public boolean isTopic(String topic) {
+		return topic.equals(getTopic());
+	}
+
 	@lombok.Generated
 	@Override
 	public int hashCode() {

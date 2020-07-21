@@ -830,7 +830,7 @@ class SFTCognitionTest {
 	}
 
 	private Predicate<Message> topic(String topic) {
-		return m -> m.getTopic().equals(topic);
+		return m -> m.isTopic(topic);
 	}
 
 	private BallPosBuilder anyPos() {

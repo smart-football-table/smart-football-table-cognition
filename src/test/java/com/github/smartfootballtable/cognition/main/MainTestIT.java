@@ -289,7 +289,7 @@ class MainTestIT {
 	}
 
 	private Stream<Message> messagesWithTopic(List<Message> messages, String topic) {
-		return messages.stream().filter(m -> m.getTopic().equals(topic));
+		return messages.stream().filter(m -> m.isTopic(topic));
 	}
 
 	private void restartBroker() throws IOException, InterruptedException {

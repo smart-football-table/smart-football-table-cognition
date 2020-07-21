@@ -99,7 +99,7 @@ public class ContractVerificationTest {
 	}
 
 	private String payloadsWithTopic(String topic) {
-		return payloads(m -> topic.equals(m.getTopic()));
+		return payloads(m -> m.isTopic(topic));
 	}
 
 	private String payloads(Predicate<Message> predicate) {
