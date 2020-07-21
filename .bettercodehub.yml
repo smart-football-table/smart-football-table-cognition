@@ -2,5 +2,5 @@ exclude:
 - /utils/.*
 - /\.mvn/.*
 
-component_depth: 8
+component_depth: 7
 
