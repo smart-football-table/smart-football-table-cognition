@@ -44,7 +44,11 @@ public class MqttConsumer implements Consumer<Message>, MessageProvider, Closeab
 			public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
 				Message message = message(topic, new String(mqttMessage.getPayload()));
 				for (Consumer<Message> consumer : consumers) {
-					consumer.accept(message);
+					try {
+						consumer.accept(message);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			}
 
