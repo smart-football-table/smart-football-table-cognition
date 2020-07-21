@@ -1,21 +1,25 @@
 package com.github.smartfootballtable.cognition.queue;
 
 import static com.github.smartfootballtable.cognition.data.Message.message;
+import static com.github.stefanbirkner.systemlambda.SystemLambda.tapSystemErr;
 import static io.moquette.BrokerConstants.HOST_PROPERTY_NAME;
 import static io.moquette.BrokerConstants.PORT_PROPERTY_NAME;
 import static java.util.Arrays.asList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-import org.awaitility.Awaitility;
 import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -50,6 +54,8 @@ class MqttAdapterTest {
 		server = newMqttServer(LOCALHOST, brokerPort);
 		secondClient = newMqttClient(LOCALHOST, brokerPort, "second-client-for-test");
 		mqttAdapter = new MqttAdapter(LOCALHOST, brokerPort);
+		await().until(secondClient::isConnected);
+		await().until(mqttAdapter::isConnected);
 	}
 
 	@AfterEach
@@ -102,6 +108,29 @@ class MqttAdapterTest {
 		List<Message> messages = asList(message("topic1", "payload1"), message("topic2", "payload2"));
 		messages.forEach(mqttAdapter::accept);
 		await().untilAsserted(() -> assertThat(messagesReceived, is(messages)));
+	}
+
+	@Test
+	void stacktraceIsPrintedOnStdErrAndSecondConsumerIsCalled() throws Exception {
+		String exceptionText = "any " + UUID.randomUUID() + "text";
+		Message message = message("ball/position/rel", "123456789012345678,0.123,0.456");
+		assertThat(tapSystemErr(() -> {
+			List<Message> messages = new ArrayList<>();
+			mqttAdapter.addConsumer(aConsumerThatThrows(() -> new NullPointerException(exceptionText)));
+			mqttAdapter.addConsumer(aConsumerThatCollectsTo(messages));
+			secondClient.publish(message.getTopic(), message.getPayload().getBytes(), 0, false);
+			await().untilAsserted(() -> assertThat(messages, is(Arrays.asList(message))));
+		}), containsString(exceptionText));
+	}
+
+	private Consumer<Message> aConsumerThatThrows(Supplier<RuntimeException> supplier) {
+		return m -> {
+			throw supplier.get();
+		};
+	}
+
+	private Consumer<Message> aConsumerThatCollectsTo(List<Message> messages) {
+		return messages::add;
 	}
 
 }
