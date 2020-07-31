@@ -18,7 +18,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static org.awaitility.Awaitility.await;
-import static org.awaitility.Awaitility.setDefaultPollInterval;
 import static org.awaitility.Awaitility.setDefaultTimeout;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.empty;
@@ -48,7 +47,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.github.smartfootballtable.cognition.MessageMother;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.mqtt.MqttAdapter;
@@ -79,7 +77,7 @@ class MainTestIT {
 			try {
 				MqttClient client = new MqttClient("tcp://" + brokerHost + ":" + brokerPort, name,
 						new MemoryPersistence());
-				client.setTimeToWait(SECONDS.toMillis(1));
+				client.setTimeToWait(timeout.toMillis());
 				client.connect(connectOptions());
 				client.setCallback(new MqttCallbackExtended() {
 
@@ -151,8 +149,7 @@ class MainTestIT {
 
 	@BeforeEach
 	void setup() throws Exception {
-		setDefaultTimeout(timeout.getSeconds() / 2, SECONDS);
-		setDefaultPollInterval(500, MILLISECONDS);
+		setDefaultTimeout(timeout.getSeconds(), SECONDS);
 		brokerPort = randomPort();
 		broker = newMqttServer(LOCALHOST, brokerPort);
 		secondClient = new MqttClientForTest(LOCALHOST, brokerPort, "client2");
@@ -183,8 +180,12 @@ class MainTestIT {
 	@AfterEach
 	void tearDown() throws Exception {
 		haltMain();
-		secondClient.close();
-		broker.stopServer();
+		if (secondClient != null) {
+			secondClient.close();
+		}
+		if (broker != null) {
+			broker.stopServer();
+		}
 	}
 
 	private int randomPort() throws IOException {
