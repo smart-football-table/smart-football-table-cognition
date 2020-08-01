@@ -81,7 +81,7 @@ import net.jqwik.api.statistics.Statistics;
 @Tag("pbt")
 class DetectionExamples {
 
-	private static final String METRIC_TABLE = "table";
+	private static final String METRIC_TABLE = "metricTable";
 
 	@Property
 	void ballOnTableNeverWillRaiseTeamScoreOrTeamsScoredEvents(
@@ -137,7 +137,7 @@ class DetectionExamples {
 	}
 
 	@Property
-	void whenBallIsDetectedInAnyCornerAfterALeftHandGoalTheGoalGetsRever(
+	void whenBallIsDetectedInAnyCornerAfterALeftHandGoalTheGoalGetsReverted(
 			@ForAll("leftGoalsToReverse") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		assertThat(
@@ -346,7 +346,7 @@ class DetectionExamples {
 
 	private PositionSequenceBuilder position(DoubleArbitrary xPosition, DoubleArbitrary yPosition) {
 		return new PositionSequenceBuilder(
-				combine(xPosition, yPosition).as((x, y) -> ts -> RelativePosition.create(ts, x, y)));
+				combine(xPosition, yPosition).as((x, y) -> ts -> create(ts, x, y)));
 	}
 
 	private static DoubleArbitrary wholeTable() {
