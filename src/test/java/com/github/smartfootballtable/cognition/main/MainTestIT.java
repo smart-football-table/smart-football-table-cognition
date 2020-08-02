@@ -2,6 +2,7 @@ package com.github.smartfootballtable.cognition.main;
 
 import static com.github.smartfootballtable.cognition.MessageMother.TOPIC_BALL_POSITION_ABS;
 import static com.github.smartfootballtable.cognition.MessageMother.relativePosition;
+import static com.github.smartfootballtable.cognition.MessageMother.scoreOfTeam;
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.create;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.noPosition;
@@ -241,8 +242,8 @@ class MainTestIT {
 			publishScoresAndShutdown();
 			try (MqttClientForTest thirdClient = new MqttClientForTest(LOCALHOST, brokerPort, "third-client")) {
 				List<Message> receivedRetained = thirdClient.getReceived();
-				await().until(() -> payloads(receivedRetained, "team/score/0"), is(asList("2")));
-				await().until(() -> payloads(receivedRetained, "team/score/1"), is(asList("3")));
+				await().until(() -> payloads(receivedRetained, scoreOfTeam(0)), is(asList("2")));
+				await().until(() -> payloads(receivedRetained, scoreOfTeam(1)), is(asList("3")));
 			}
 		});
 	}
@@ -264,8 +265,8 @@ class MainTestIT {
 	private void publishScoresAndShutdown() {
 		main.cognition().messages().scoreChanged(0, 1, 2);
 		main.cognition().messages().scoreChanged(1, 2, 3);
-		await().until(() -> messagesWithTopicOf(secondClient, "team/score/0").count(), is(1L));
-		await().until(() -> messagesWithTopicOf(secondClient, "team/score/1").count(), is(1L));
+		await().until(() -> messagesWithTopicOf(secondClient, scoreOfTeam(0)).count(), is(1L));
+		await().until(() -> messagesWithTopicOf(secondClient, scoreOfTeam(1)).count(), is(1L));
 		haltMain();
 	}
 

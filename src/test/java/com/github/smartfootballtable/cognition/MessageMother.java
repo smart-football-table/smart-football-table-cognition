@@ -10,6 +10,12 @@ public final class MessageMother {
 
 	public static final String TOPIC_BALL_POSITION_REL = "ball/position/rel";
 	public static final String TOPIC_BALL_POSITION_ABS = "ball/position/abs";
+	public static final String GAME_FOUL = "game/foul";
+
+	public static final String GAME_START = "game/start";
+	public static final String TEAM_SCORE = "team/score/";
+	public static final String GAME_GAMEOVER = "game/gameover";
+	public static final String GAME_IDLE = "game/idle";
 
 	private MessageMother() {
 		super();
@@ -25,6 +31,18 @@ public final class MessageMother {
 
 	public static Message absolutePosition(Object... values) {
 		return message(TOPIC_BALL_POSITION_ABS, joined(values));
+	}
+
+	public static String scoreOfTeam(int team) {
+		return TEAM_SCORE + team;
+	}
+
+	public static boolean isTeamScore(Message m) {
+		return m.getTopic().startsWith(TEAM_SCORE);
+	}
+
+	public static String teamScored() {
+		return "team/scored";
 	}
 
 	private static String joined(Object... values) {
