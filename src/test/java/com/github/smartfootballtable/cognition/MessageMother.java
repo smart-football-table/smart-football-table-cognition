@@ -37,10 +37,6 @@ public final class MessageMother {
 		return TEAM_SCORE + team;
 	}
 
-	public static boolean isTeamScore(Message m) {
-		return m.getTopic().startsWith(TEAM_SCORE);
-	}
-
 	public static String teamScored() {
 		return "team/scored";
 	}

@@ -16,6 +16,7 @@ import static com.github.smartfootballtable.cognition.Topic.TEAM_ID_RIGHT;
 import static com.github.smartfootballtable.cognition.Topic.TEAM_SCORED;
 import static com.github.smartfootballtable.cognition.Topic.TEAM_SCORE_LEFT;
 import static com.github.smartfootballtable.cognition.Topic.TEAM_SCORE_RIGHT;
+import static com.github.smartfootballtable.cognition.Topic.isTopic;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.create;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.noPosition;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
@@ -157,8 +158,8 @@ class DetectionExamples {
 	}
 
 	private Predicate<Message> isInitialScore() {
-		return TEAM_SCORE_LEFT.getPredicate().and(initialScorePayload())
-				.or(TEAM_SCORE_RIGHT.getPredicate().and(initialScorePayload()));
+		return isTopic(TEAM_SCORE_LEFT).and(initialScorePayload()) //
+				.or(isTopic(TEAM_SCORE_RIGHT).and(initialScorePayload()));
 	}
 
 	private Predicate<Message> initialScorePayload() {
@@ -169,7 +170,7 @@ class DetectionExamples {
 	void leftGoalProducesTeamScoredMessage(@ForAll("goalSituationsLeft") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(process(positions, table).filter(topicIs(TEAM_SCORED)).map(Message::getPayload).collect(toList()),
+		assertThat(process(positions, table).filter(isTopic(TEAM_SCORED)).map(Message::getPayload).collect(toList()),
 				is(asList(TEAM_ID_LEFT)));
 	}
 
@@ -177,8 +178,7 @@ class DetectionExamples {
 	void leftGoalsProducesTeamScoreMessage(@ForAll("goalSituationsLeft") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(
-				process(positions, table).filter(topicIs(TEAM_SCORE_LEFT)).map(Message::getPayload).collect(toList()),
+		assertThat(process(positions, table).filter(isTopic(TEAM_SCORE_LEFT)).map(Message::getPayload).collect(toList()),
 				is(asList("1")));
 	}
 
@@ -186,7 +186,7 @@ class DetectionExamples {
 	void rightGoalProducesTeamScoredMessage(@ForAll("goalSituationsRight") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(process(positions, table).filter(topicIs(TEAM_SCORED)).map(Message::getPayload).collect(toList()),
+		assertThat(process(positions, table).filter(isTopic(TEAM_SCORED)).map(Message::getPayload).collect(toList()),
 				is(asList(TEAM_ID_RIGHT)));
 	}
 
@@ -194,8 +194,7 @@ class DetectionExamples {
 	void rightGoalProducesTeamScoreMessage(@ForAll("goalSituationsRight") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(
-				process(positions, table).filter(topicIs(TEAM_SCORE_RIGHT)).map(Message::getPayload).collect(toList()),
+		assertThat(process(positions, table).filter(isTopic(TEAM_SCORE_RIGHT)).map(Message::getPayload).collect(toList()),
 				is(asList("1")));
 	}
 
@@ -203,8 +202,7 @@ class DetectionExamples {
 	void whenBallIsDetectedInAnyCornerAfterALeftHandGoalTheGoalGetsReverted(
 			@ForAll("leftGoalsToReverse") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(
-				process(positions, table).filter(topicIs(TEAM_SCORE_LEFT)).map(Message::getPayload).collect(toList()),
+		assertThat(process(positions, table).filter(isTopic(TEAM_SCORE_LEFT)).map(Message::getPayload).collect(toList()),
 				is(asList("1", "0")));
 	}
 
@@ -212,8 +210,7 @@ class DetectionExamples {
 	void whenBallIsDetectedInAnyCornerAfterARightHandGoalTheGoalGetsReverted(
 			@ForAll("rightGoalsToReverse") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(
-				process(positions, table).filter(topicIs(TEAM_SCORE_RIGHT)).map(Message::getPayload).collect(toList()),
+		assertThat(process(positions, table).filter(isTopic(TEAM_SCORE_RIGHT)).map(Message::getPayload).collect(toList()),
 				is(asList("1", "0")));
 	}
 
@@ -221,11 +218,7 @@ class DetectionExamples {
 	void whenBallDoesNotMoveForMoreThanOneMinuteTheGameGoesToIdleMode(
 			@ForAll("idleWhereBallMaybeGone") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(process(positions, table).filter(topicIs(GAME_IDLE).and(payloadIs("true"))).count(), is(1L));
-	}
-
-	private Predicate<Message> topicIs(Topic topic) {
-		return topic.getPredicate();
+		assertThat(process(positions, table).filter(isTopic(GAME_IDLE).and(payloadIs("true"))).count(), is(1L));
 	}
 
 	@Property(shrinking = ShrinkingMode.OFF, afterFailure = AfterFailureMode.SAMPLE_ONLY)
@@ -234,9 +227,9 @@ class DetectionExamples {
 		statistics(positions);
 		List<Message> messages = process(positions, table).collect(toList());
 		Map<String, Long> counts = new HashMap<>();
-		counts.put("foul", messages.stream().filter(topicIs(GAME_FOUL)).count());
-		counts.put("idleOn", messages.stream().filter(topicIs(GAME_IDLE).and(payloadIs("true"))).count());
-		counts.put("idleOff", messages.stream().filter(topicIs(GAME_IDLE).and(payloadIs("false"))).count());
+		counts.put("foul", messages.stream().filter(isTopic(GAME_FOUL)).count());
+		counts.put("idleOn", messages.stream().filter(isTopic(GAME_IDLE).and(payloadIs("true"))).count());
+		counts.put("idleOff", messages.stream().filter(isTopic(GAME_IDLE).and(payloadIs("false"))).count());
 		assertThat("Amount of messages not equal" + counts, new HashSet<>(counts.values()).size() == 1, is(true));
 	}
 
@@ -244,8 +237,7 @@ class DetectionExamples {
 	void allRelPositionAreBetween0And1(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(
-				process(positions, table).filter(topicIs(BALL_POSITION_REL)).map(Message::getPayload).collect(toList()),
+		assertThat(process(positions, table).filter(isTopic(BALL_POSITION_REL)).map(Message::getPayload).collect(toList()),
 				everyItem(allOf( //
 						hasNumberBetween(0, 0, 1), hasNumberBetween(1, 0, 1))));
 	}
@@ -254,15 +246,14 @@ class DetectionExamples {
 	boolean ballPositionAbsForEveryPosition(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		return process(positions, table).filter(topicIs(BALL_POSITION_ABS)).count() == positions.size();
+		return process(positions, table).filter(isTopic(BALL_POSITION_ABS)).count() == positions.size();
 	}
 
 	@Property(shrinking = ShrinkingMode.OFF, afterFailure = AfterFailureMode.SAMPLE_ONLY)
 	void allAbsPositionAreBetween0AndTableSize(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(
-				process(positions, table).filter(topicIs(BALL_POSITION_ABS)).map(Message::getPayload).collect(toList()),
+		assertThat(process(positions, table).filter(isTopic(BALL_POSITION_ABS)).map(Message::getPayload).collect(toList()),
 				everyItem(allOf( //
 						hasNumberBetween(0, 0, (int) table.getWidth().value(table.getDistanceUnit())),
 						hasNumberBetween(1, 0, (int) table.getHeight().value(table.getDistanceUnit())))));
@@ -272,14 +263,14 @@ class DetectionExamples {
 	boolean ballVelocityKmhForEveryPositionChange(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		return process(positions, table).filter(topicIs(BALL_VELOCITY_KMH)).count() == positions.size() - 1;
+		return process(positions, table).filter(isTopic(BALL_VELOCITY_KMH)).count() == positions.size() - 1;
 	}
 
 	@Property
 	void allBallPositionVelocitiesArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(process(positions, table).filter(topicIs(BALL_VELOCITY_KMH)).map(Message::getPayload)
+		assertThat(process(positions, table).filter(isTopic(BALL_VELOCITY_KMH)).map(Message::getPayload)
 				.map(Double::parseDouble).collect(toList()), everyItem(is(positive())));
 	}
 
@@ -287,14 +278,14 @@ class DetectionExamples {
 	boolean ballVelocityMsForEveryPositionChange(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		return process(positions, table).filter(topicIs(BALL_VELOCITY_MS)).count() == positions.size() - 1;
+		return process(positions, table).filter(isTopic(BALL_VELOCITY_MS)).count() == positions.size() - 1;
 	}
 
 	@Property
 	void ballVelocityMsArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(process(positions, table).filter(topicIs(BALL_VELOCITY_MS)).map(Message::getPayload)
+		assertThat(process(positions, table).filter(isTopic(BALL_VELOCITY_MS)).map(Message::getPayload)
 				.map(Double::parseDouble).collect(toList()), everyItem(is(positive())));
 	}
 
@@ -302,7 +293,7 @@ class DetectionExamples {
 	void ballDistanceArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
-		assertThat(process(positions, table).filter(topicIs(BALL_DISTANCE_CM)).map(Message::getPayload)
+		assertThat(process(positions, table).filter(isTopic(BALL_DISTANCE_CM)).map(Message::getPayload)
 				.map(Double::parseDouble).collect(toList()), everyItem(is(positive())));
 	}
 
@@ -311,8 +302,8 @@ class DetectionExamples {
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		List<Message> processed = process(positions, table).collect(toList());
-		assertThat(processed.stream().filter(topicIs(BALL_OVERALL_DISTANCE_CM)).count(),
-				is(processed.stream().filter(topicIs(BALL_DISTANCE_CM)).count()));
+		assertThat(processed.stream().filter(isTopic(BALL_OVERALL_DISTANCE_CM)).count(),
+				is(processed.stream().filter(isTopic(BALL_DISTANCE_CM)).count()));
 	}
 
 	@Property
@@ -320,8 +311,8 @@ class DetectionExamples {
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
 		List<Message> processed = process(positions, table).collect(toList());
-		OfDouble singles = doublePayload(processed, topicIs(BALL_DISTANCE_CM)).iterator();
-		OfDouble overalls = doublePayload(processed, topicIs(BALL_OVERALL_DISTANCE_CM)).iterator();
+		OfDouble singles = doublePayload(processed, isTopic(BALL_DISTANCE_CM)).iterator();
+		OfDouble overalls = doublePayload(processed, isTopic(BALL_OVERALL_DISTANCE_CM)).iterator();
 
 		double sum = 0.0;
 		int count = 0;
@@ -365,7 +356,7 @@ class DetectionExamples {
 	}
 
 	private Predicate<Message> anyOfTopic(Stream<Topic> topics) {
-		return anyOf(topics.map(Topic::getPredicate));
+		return anyOf(topics.map(Topic::isTopic));
 	}
 
 	private Predicate<Message> anyOf(Stream<Predicate<Message>> predicates) {

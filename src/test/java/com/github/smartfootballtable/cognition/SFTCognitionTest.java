@@ -16,6 +16,8 @@ import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuil
 import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.offTable;
 import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.pos;
 import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.upperLeftCorner;
+import static com.github.smartfootballtable.cognition.Topic.TEAM_SCORE;
+import static com.github.smartfootballtable.cognition.Topic.isTopic;
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.create;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
@@ -518,7 +520,7 @@ class SFTCognitionTest {
 		givenATableOfAnySize();
 		givenInputToProcessIs(ball().at(kickoff()).at(kickoff()));
 		whenInputWasProcessed();
-		thenNoMessageIsSent(MessageMother::isTeamScore);
+		thenNoMessageIsSent(isTopic(TEAM_SCORE));
 	}
 
 	@Test
