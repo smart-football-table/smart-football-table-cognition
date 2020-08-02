@@ -17,13 +17,13 @@ import static org.junit.Assert.assertThat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import com.github.smartfootballtable.cognition.Messages;
 import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
@@ -41,14 +41,15 @@ import au.com.dius.pact.core.model.messaging.MessagePact;
 @PactFolder("pacts")
 class ConsumerPactTest {
 
+	Table table = new Table(200, 100, CENTIMETER);
+	List<Message> consumed = new ArrayList<>();
+	SFTCognition cognition = new SFTCognition(table, consumed::add);
+
 	@Test
 	@PactTestFor(providerName = "detection", pactMethod = "relativeBallPositionPact", providerType = ASYNCH)
 	void verifyRelativePositionIsPublished(MessagePact pact) {
-		Table table = new Table(200, 100, CENTIMETER);
-		List<Message> consumed = new ArrayList<>();
-		SFTCognition cognition = new SFTCognition(table, consumed::add);
-		process(cognition, messagesOf(pact).map(m -> toRelPosition(cognition.messages(), m)));
-		assertThat(filter(consumed), is(asList(absolutePosition("24.60", "45.60"))));
+		process(messagesOf(pact).map(this::toRelPosition));
+		assertThat(filter(isNotTopic(GAME_START)), is(asList(absolutePosition("24.60", "45.60"))));
 	}
 
 //	String date = "2020-07-21T18:42:24.123456";
@@ -68,8 +69,8 @@ class ConsumerPactTest {
 		return stream(values).collect(joining(","));
 	}
 
-	private void process(SFTCognition cognition, Stream<RelativePosition> map) {
-		map.forEach(cognition::process);
+	private void process(Stream<RelativePosition> positions) {
+		positions.forEach(cognition::process);
 	}
 
 	private Stream<Message> messagesOf(MessagePact pact) {
@@ -90,8 +91,12 @@ class ConsumerPactTest {
 		return positiveLongValue() + "(?:\\.[0-9]+)?";
 	}
 
-	private List<Message> filter(List<Message> messages) {
-		return messages.stream().filter(isNotTopic(GAME_START)).collect(toList());
+	private List<Message> filter(Predicate<Message> predicate) {
+		return consumed().filter(predicate).collect(toList());
+	}
+
+	private Stream<Message> consumed() {
+		return consumed.stream();
 	}
 
 	private Message toMessage(au.com.dius.pact.core.model.messaging.Message message) {
@@ -99,10 +104,11 @@ class ConsumerPactTest {
 		return message(jsonObject.getString("topic"), jsonObject.getString("payload"));
 	}
 
-	private RelativePosition toRelPosition(Messages messages, Message message) {
-		return Optional.of(message).filter(m -> messages.isRelativePosition(m)) //
+	private RelativePosition toRelPosition(Message message) {
+		return Optional.of(message) //
+				.filter(cognition.messages()::isRelativePosition) //
 				.map(Message::getPayload) //
-				.map(messages::parsePosition) //
+				.map(cognition.messages()::parsePosition) //
 				.orElseThrow(() -> new IllegalStateException(message + " not a relative position"));
 	}
 
