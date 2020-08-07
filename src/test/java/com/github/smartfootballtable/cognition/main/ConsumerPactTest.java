@@ -1,5 +1,6 @@
 package com.github.smartfootballtable.cognition.main;
 
+import static au.com.dius.pact.consumer.ConsumerPactBuilder.jsonBody;
 import static au.com.dius.pact.consumer.junit5.ProviderType.ASYNCH;
 import static com.github.smartfootballtable.cognition.MessageMother.TOPIC_BALL_POSITION_REL;
 import static com.github.smartfootballtable.cognition.MessageMother.absolutePosition;
@@ -78,7 +79,7 @@ class ConsumerPactTest {
 	}
 
 	private PactDslJsonBody body(String payload, String matcher) {
-		return new PactDslJsonBody() //
+		return jsonBody() //
 				.stringValue("topic", TOPIC_BALL_POSITION_REL) //
 				.stringMatcher("payload", matcher, payload);
 	}
