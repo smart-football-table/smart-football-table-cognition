@@ -1,5 +1,8 @@
 package com.github.smartfootballtable.cognition.main;
 
+import static com.github.smartfootballtable.cognition.MessageMother.TOPIC_BALL_POSITION_ABS;
+import static com.github.smartfootballtable.cognition.MessageMother.relativePosition;
+import static com.github.smartfootballtable.cognition.MessageMother.scoreOfTeam;
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.create;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.noPosition;
@@ -16,7 +19,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static org.awaitility.Awaitility.await;
-import static org.awaitility.Awaitility.setDefaultPollInterval;
 import static org.awaitility.Awaitility.setDefaultTimeout;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.empty;
@@ -48,7 +50,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
-import com.github.smartfootballtable.cognition.mqtt.MqttConsumer;
+import com.github.smartfootballtable.cognition.mqtt.MqttAdapter;
 
 import io.moquette.server.Server;
 import io.moquette.server.config.MemoryConfig;
@@ -76,7 +78,7 @@ class MainTestIT {
 			try {
 				MqttClient client = new MqttClient("tcp://" + brokerHost + ":" + brokerPort, name,
 						new MemoryPersistence());
-				client.setTimeToWait(SECONDS.toMillis(1));
+				client.setTimeToWait(timeout.toMillis());
 				client.connect(connectOptions());
 				client.setCallback(new MqttCallbackExtended() {
 
@@ -148,8 +150,7 @@ class MainTestIT {
 
 	@BeforeEach
 	void setup() throws Exception {
-		setDefaultTimeout(timeout.getSeconds() / 2, SECONDS);
-		setDefaultPollInterval(500, MILLISECONDS);
+		setDefaultTimeout(timeout.getSeconds(), SECONDS);
 		brokerPort = randomPort();
 		broker = newMqttServer(LOCALHOST, brokerPort);
 		secondClient = new MqttClientForTest(LOCALHOST, brokerPort, "client2");
@@ -162,8 +163,8 @@ class MainTestIT {
 			}
 		});
 		await().until(() -> {
-			MqttConsumer consumer = main.mqttConsumer();
-			return consumer != null && consumer.isConnected();
+			MqttAdapter adapter = main.mqttAdapter();
+			return adapter != null && adapter.isConnected();
 		});
 	}
 
@@ -180,8 +181,12 @@ class MainTestIT {
 	@AfterEach
 	void tearDown() throws Exception {
 		haltMain();
-		secondClient.close();
-		broker.stopServer();
+		if (secondClient != null) {
+			secondClient.close();
+		}
+		if (broker != null) {
+			broker.stopServer();
+		}
 	}
 
 	private int randomPort() throws IOException {
@@ -202,8 +207,9 @@ class MainTestIT {
 	@Test
 	void doesPublishAbsWhenReceivingRel() {
 		assertTimeoutPreemptively(timeout, () -> {
-			publish("ball/position/rel", "123456789012345678,0.123,0.456");
-			await().until(() -> payloads(secondClient.getReceived(), "ball/position/abs"), is(asList("14.76,31.01")));
+			publish(relativePosition());
+			await().until(() -> payloads(secondClient.getReceived(), TOPIC_BALL_POSITION_ABS),
+					is(asList("14.76,31.01")));
 		});
 	}
 
@@ -224,7 +230,7 @@ class MainTestIT {
 			muteSystemErr(() -> {
 				restartBroker();
 				await().until(secondClient::isConnected);
-				await().until(main.mqttConsumer()::isConnected);
+				await().until(main.mqttAdapter()::isConnected);
 			});
 			assertReceivesGameStartWhenSendingReset();
 		});
@@ -236,8 +242,8 @@ class MainTestIT {
 			publishScoresAndShutdown();
 			try (MqttClientForTest thirdClient = new MqttClientForTest(LOCALHOST, brokerPort, "third-client")) {
 				List<Message> receivedRetained = thirdClient.getReceived();
-				await().until(() -> payloads(receivedRetained, "team/score/0"), is(asList("2")));
-				await().until(() -> payloads(receivedRetained, "team/score/1"), is(asList("3")));
+				await().until(() -> payloads(receivedRetained, scoreOfTeam(0)), is(asList("2")));
+				await().until(() -> payloads(receivedRetained, scoreOfTeam(1)), is(asList("3")));
 			}
 		});
 	}
@@ -259,8 +265,8 @@ class MainTestIT {
 	private void publishScoresAndShutdown() {
 		main.cognition().messages().scoreChanged(0, 1, 2);
 		main.cognition().messages().scoreChanged(1, 2, 3);
-		await().until(() -> messagesWithTopicOf(secondClient, "team/score/0").count(), is(1L));
-		await().until(() -> messagesWithTopicOf(secondClient, "team/score/1").count(), is(1L));
+		await().until(() -> messagesWithTopicOf(secondClient, scoreOfTeam(0)).count(), is(1L));
+		await().until(() -> messagesWithTopicOf(secondClient, scoreOfTeam(1)).count(), is(1L));
 		haltMain();
 	}
 
@@ -289,7 +295,7 @@ class MainTestIT {
 	}
 
 	private Stream<Message> messagesWithTopic(List<Message> messages, String topic) {
-		return messages.stream().filter(m -> m.getTopic().equals(topic));
+		return messages.stream().filter(m -> m.isTopic(topic));
 	}
 
 	private void restartBroker() throws IOException, InterruptedException {
@@ -307,10 +313,14 @@ class MainTestIT {
 
 	private void publish(RelativePosition position) {
 		try {
-			publish("ball/position/rel", position.getTimestamp() + "," + position.getX() + "," + position.getY());
+			publish(relativePosition(position.getTimestamp(), position.getX(), position.getY()));
 		} catch (MqttException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private void publish(Message message) throws MqttException, MqttPersistenceException {
+		publish(message.getTopic(), message.getPayload());
 	}
 
 	private void publish(String topic, String payload) throws MqttException, MqttPersistenceException {

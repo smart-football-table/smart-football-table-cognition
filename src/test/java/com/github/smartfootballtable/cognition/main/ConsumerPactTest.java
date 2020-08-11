@@ -1,21 +1,30 @@
 package com.github.smartfootballtable.cognition.main;
 
+import static au.com.dius.pact.consumer.ConsumerPactBuilder.jsonBody;
 import static au.com.dius.pact.consumer.junit5.ProviderType.ASYNCH;
+import static com.github.smartfootballtable.cognition.MessageMother.TOPIC_BALL_POSITION_REL;
+import static com.github.smartfootballtable.cognition.MessageMother.absolutePosition;
+import static com.github.smartfootballtable.cognition.Topic.GAME_START;
+import static com.github.smartfootballtable.cognition.Topic.isNotTopic;
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
 import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import com.github.smartfootballtable.cognition.Messages;
 import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
@@ -33,31 +42,46 @@ import au.com.dius.pact.core.model.messaging.MessagePact;
 @PactFolder("pacts")
 class ConsumerPactTest {
 
+	Table table = new Table(200, 100, CENTIMETER);
+	List<Message> consumed = new ArrayList<>();
+	SFTCognition cognition = new SFTCognition(table, consumed::add);
+
 	@Test
 	@PactTestFor(providerName = "detection", pactMethod = "relativeBallPositionPact", providerType = ASYNCH)
 	void verifyRelativePositionIsPublished(MessagePact pact) {
-		Table table = new Table(200, 100, CENTIMETER);
-		List<Message> consumed = new ArrayList<>();
-		SFTCognition cognition = new SFTCognition(table, consumed::add);
-		cognition.process(
-				pact.getMessages().stream().map(this::toMessage).map(m -> toRelPosition(cognition.messages(), m)));
-		assertThat(filter(consumed), is(asList(message("ball/position/abs", "24.60,45.60"))));
+		process(messagesOf(pact).map(this::toRelPosition));
+		assertThat(filter(isNotTopic(GAME_START)), is(asList(absolutePosition("24.60", "45.60"))));
 	}
+
+//	String date = "2020-07-21T18:42:24.123456";
+//	System.out.println(DateTime.parse(date).getMillis());
 
 	@Pact(consumer = "cognition")
 	MessagePact relativeBallPositionPact(MessagePactBuilder builder) {
 		return builder //
 				.given("the ball moved on the table") //
 				.expectsToReceive("the relative position gets published") //
-				.withContent(body("123456789012345678" + "," + "0.123" + "," + "0.456")) //
+				.withContent(body(csv("123456789012345678", "0.123", "0.456"),
+						csv(positiveLongValue(), positiveFloatingPoint(), positiveFloatingPoint()))) //
 				.toPact();
 	}
 
-	private PactDslJsonBody body(String payload) {
-		return new PactDslJsonBody() //
-				.stringType("topic", "ball/position/rel") //
-				.stringMatcher("payload",
-						positiveLongValue() + "," + positiveFloatingPoint() + "," + positiveFloatingPoint(), payload);
+	private String csv(String... values) {
+		return stream(values).collect(joining(","));
+	}
+
+	private void process(Stream<RelativePosition> positions) {
+		positions.forEach(cognition::process);
+	}
+
+	private Stream<Message> messagesOf(MessagePact pact) {
+		return pact.getMessages().stream().map(this::toMessage);
+	}
+
+	private PactDslJsonBody body(String payload, String matcher) {
+		return jsonBody() //
+				.stringValue("topic", TOPIC_BALL_POSITION_REL) //
+				.stringMatcher("payload", matcher, payload);
 	}
 
 	private static String positiveLongValue() {
@@ -68,8 +92,12 @@ class ConsumerPactTest {
 		return positiveLongValue() + "(?:\\.[0-9]+)?";
 	}
 
-	private List<Message> filter(List<Message> messages) {
-		return messages.stream().filter(m -> !m.getTopic().equals("game/start")).collect(toList());
+	private List<Message> filter(Predicate<Message> predicate) {
+		return consumed().filter(predicate).collect(toList());
+	}
+
+	private Stream<Message> consumed() {
+		return consumed.stream();
 	}
 
 	private Message toMessage(au.com.dius.pact.core.model.messaging.Message message) {
@@ -77,8 +105,12 @@ class ConsumerPactTest {
 		return message(jsonObject.getString("topic"), jsonObject.getString("payload"));
 	}
 
-	private RelativePosition toRelPosition(Messages messages, Message m) {
-		return messages.isRelativePosition(m) ? messages.parsePosition(m.getPayload()) : null;
+	private RelativePosition toRelPosition(Message message) {
+		return Optional.of(message) //
+				.filter(cognition.messages()::isRelativePosition) //
+				.map(Message::getPayload) //
+				.map(cognition.messages()::parsePosition) //
+				.orElseThrow(() -> new IllegalStateException(message + " not a relative position"));
 	}
 
 }

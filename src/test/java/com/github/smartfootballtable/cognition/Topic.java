@@ -1,39 +1,51 @@
 package com.github.smartfootballtable.cognition;
 
+import static com.github.smartfootballtable.cognition.MessageMother.*;
+import static com.github.smartfootballtable.cognition.MessageMother.TOPIC_BALL_POSITION_REL;
+
 import java.util.function.Predicate;
 
 import com.github.smartfootballtable.cognition.data.Message;
 
 public enum Topic {
 
-	BALL_POSITION_ABS(topicStartsWith("ball/position/abs")), //
-	BALL_POSITION_REL(topicStartsWith("ball/position/rel")), //
-	BALL_DISTANCE_CM(topicStartsWith("ball/distance/cm")), //
-	BALL_OVERALL_DISTANCE_CM(topicStartsWith("ball/distance/overall/cm")), //
-	BALL_VELOCITY_KMH(topicStartsWith("ball/velocity/kmh")), //
-	BALL_VELOCITY_MS(topicStartsWith("ball/velocity/ms")), //
-	GAME_START(topicStartsWith("game/start")), //
-	GAME_FOUL(topicStartsWith("game/foul")), //
-	GAME_IDLE(topicStartsWith("game/idle")), //
-	TEAM_SCORE_LEFT(topicStartsWith("team/score/" + Topic.TEAM_ID_LEFT)), //
-	TEAM_SCORE_RIGHT(topicStartsWith("team/score/" + Topic.TEAM_ID_RIGHT)), //
-	TEAM_SCORED(topicStartsWith("team/scored")); //
+	BALL_POSITION_ABS(topicIs(TOPIC_BALL_POSITION_ABS)), //
+	BALL_POSITION_REL(topicIs(TOPIC_BALL_POSITION_REL)), //
+	BALL_DISTANCE_CM(topicIs("ball/distance/cm")), //
+	BALL_OVERALL_DISTANCE_CM(topicIs("ball/distance/overall/cm")), //
+	BALL_VELOCITY_KMH(topicIs("ball/velocity/kmh")), //
+	BALL_VELOCITY_MS(topicIs("ball/velocity/ms")), //
+	GAME_START(topicIs("game/start")), //
+	GAME_FOUL(topicIs("game/foul")), //
+	GAME_IDLE(topicIs("game/idle")), //
+	TEAM_SCORE(topicStartsWith(MessageMother.TEAM_SCORE)), //
+	TEAM_SCORE_LEFT(topicIs(MessageMother.TEAM_SCORE + Topic.TEAM_ID_LEFT)), //
+	TEAM_SCORE_RIGHT(topicIs(MessageMother.TEAM_SCORE + Topic.TEAM_ID_RIGHT)), //
+	TEAM_SCORED(topicIs("team/scored")); //
 
 	public static final String TEAM_ID_LEFT = "0";
 	public static final String TEAM_ID_RIGHT = "1";
 
 	private final Predicate<Message> predicate;
 
-	static Predicate<Message> topicStartsWith(String topic) {
+	private static Predicate<Message> topicIs(String topic) {
+		return m -> m.getTopic().equals(topic);
+	}
+
+	private static Predicate<Message> topicStartsWith(String topic) {
 		return m -> m.getTopic().startsWith(topic);
 	}
 
-	Topic(Predicate<Message> predicate) {
+	private Topic(Predicate<Message> predicate) {
 		this.predicate = predicate;
 	}
 
-	Predicate<Message> getPredicate() {
-		return predicate;
+	public static Predicate<Message> isTopic(Topic topic) {
+		return topic.predicate;
+	}
+
+	public static Predicate<Message> isNotTopic(Topic topic) {
+		return isTopic(topic).negate();
 	}
 
 }

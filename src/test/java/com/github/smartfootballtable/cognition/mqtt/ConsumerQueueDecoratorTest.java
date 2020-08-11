@@ -13,14 +13,14 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.smartfootballtable.cognition.queue.QueueConsumer;
+import com.github.smartfootballtable.cognition.queue.ConsumerQueueDecorator;
 
-class QueueConsumerTest {
+class ConsumerQueueDecoratorTest {
 
 	@Test
 	void singleElementInQueueOfSize1() throws InterruptedException {
 		List<String> strings = new ArrayList<>();
-		queue(addTo(strings), 1).accept("test");
+		consumeFromSut(addTo(strings), 1).accept("test");
 		TimeUnit.MILLISECONDS.sleep(50);
 		assertThat(strings, is(asList("test")));
 	}
@@ -29,7 +29,7 @@ class QueueConsumerTest {
 	void whenBlockingWillAcceptAsManyElementsAsTheQueueHasSize() throws InterruptedException {
 		int queueSize = 10;
 		List<String> strings = new ArrayList<>();
-		Consumer<String> queued = queue(sleep().andThen(addTo(strings)), queueSize);
+		Consumer<String> queued = consumeFromSut(sleepVeryLong().andThen(addTo(strings)), queueSize);
 		fillQueue(queued, queueSize);
 		TimeUnit.MILLISECONDS.sleep(50);
 		assertThat(strings, is(emptyList()));
@@ -39,7 +39,7 @@ class QueueConsumerTest {
 	void whenBlockingAndTheQueueIsFullNoMoreElementsAreAccepted() throws InterruptedException {
 		int queueSize = 10;
 		List<String> strings = new ArrayList<>();
-		Consumer<String> queued = queue(sleep().andThen(addTo(strings)), queueSize);
+		Consumer<String> queued = consumeFromSut(sleepVeryLong().andThen(addTo(strings)), queueSize);
 		fillQueue(queued, queueSize);
 
 		Thread backgroundAdder = new Thread(() -> queued.accept("adding-last-element"));
@@ -53,10 +53,10 @@ class QueueConsumerTest {
 		IntStream.rangeClosed(0, queueSize).mapToObj(i -> "test" + i).forEach(queued::accept);
 	}
 
-	private Consumer<String> sleep() {
+	private Consumer<String> sleepVeryLong() {
 		return t -> {
 			try {
-				TimeUnit.HOURS.sleep(1);
+				TimeUnit.DAYS.sleep(Long.MAX_VALUE);
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
@@ -67,8 +67,8 @@ class QueueConsumerTest {
 		return strings::add;
 	}
 
-	private <T> Consumer<T> queue(Consumer<T> consumer, int queueSize) {
-		return new QueueConsumer<T>(consumer, queueSize);
+	private <T> Consumer<T> consumeFromSut(Consumer<T> consumer, int queueSize) {
+		return new ConsumerQueueDecorator<T>(consumer, queueSize);
 	}
 
 }

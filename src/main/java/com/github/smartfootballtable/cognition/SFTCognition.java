@@ -75,17 +75,7 @@ public class SFTCognition {
 		return this;
 	}
 
-	public void process(Stream<RelativePosition> positions) {
-		positions.forEach(this::process);
-	}
-
-	public void process(Supplier<RelativePosition> positions) {
-		while (true) {
-			process(positions.get());
-		}
-	}
-
-	private void process(RelativePosition pos) {
+	public void process(RelativePosition pos) {
 		if (pos == null) {
 			// TOOO log invalid line
 		} else {

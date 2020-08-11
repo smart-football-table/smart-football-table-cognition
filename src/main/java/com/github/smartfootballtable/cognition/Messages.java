@@ -114,18 +114,7 @@ public class Messages {
 	}
 
 	private void publishTeamScore(int teamid, int score) {
-		gameScore(teamid, score);
 		publish(retainedMessage("team/score/" + teamid, score));
-	}
-
-	/**
-	 * Will be removed in future versions
-	 * 
-	 * @deprecated replaces by team/score/$id
-	 */
-	@Deprecated
-	private void gameScore(int teamid, int score) {
-		publish(message("game/score/" + teamid, score));
 	}
 
 	public void foul() {
@@ -150,31 +139,34 @@ public class Messages {
 
 	private void publish(Message message) {
 		consumer.accept(message);
-		boolean retained = message.isRetained();
-		if (retained) {
+		if (message.isRetained()) {
 			retainedTopics.add(message.getTopic());
 		}
 	}
 
 	public void clearRetained() {
-		retainedTopics.forEach(t -> publish(retainedMessage(t, "")));
+		retainedTopics.forEach(this::clearTopic);
+	}
+
+	private void clearTopic(String topic) {
+		publish(retainedMessage(topic, ""));
 	}
 
 	public boolean isReset(Message message) {
-		return message.getTopic().equals(GAME_RESET);
+		return message.isTopic(GAME_RESET);
 	}
 
 	public boolean isRelativePosition(Message message) {
-		return message.getTopic().equals(BALL_POSITION_REL);
+		return message.isTopic(BALL_POSITION_REL);
 	}
 
 	public RelativePosition parsePosition(String payload) {
-		String[] coords = payload.split("\\,");
-		if (coords.length == 3) {
-			Long timestamp = toLong(coords[0]);
-			Double x = toDouble(coords[1]);
-			Double y = toDouble(coords[2]);
-			if (x != null && y != null) {
+		String[] values = payload.split("\\,");
+		if (values.length == 3) {
+			Long timestamp = toLong(values[0]);
+			Double x = toDouble(values[1]);
+			Double y = toDouble(values[2]);
+			if (timestamp != null && x != null && y != null) {
 				return RelativePosition.create(timestamp, x, y);
 			}
 		}

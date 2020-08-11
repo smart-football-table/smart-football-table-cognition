@@ -6,15 +6,15 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.Consumer;
 
-public class QueueConsumer<T> implements Consumer<T> {
+public class ConsumerQueueDecorator<T> implements Consumer<T> {
 
 	private final BlockingQueue<T> blockingQueue;
 
-	public QueueConsumer(Consumer<T> delegate) {
+	public ConsumerQueueDecorator(Consumer<T> delegate) {
 		this(delegate, 100);
 	}
 
-	public QueueConsumer(Consumer<T> delegate, int queueSize) {
+	public ConsumerQueueDecorator(Consumer<T> delegate, int queueSize) {
 		this.blockingQueue = new LinkedBlockingDeque<>(queueSize);
 		runAsync(() -> {
 			while (true) {

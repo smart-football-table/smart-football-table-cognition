@@ -5,8 +5,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -21,12 +22,39 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import com.github.smartfootballtable.cognition.MessageProvider;
 import com.github.smartfootballtable.cognition.data.Message;
 
-public class MqttConsumer implements Consumer<Message>, MessageProvider, Closeable {
+public class MqttAdapter implements Consumer<Message>, MessageProvider, Closeable {
+
+	private static final class ConsumerMultiplexer implements Consumer<Message> {
+
+		private final List<Consumer<Message>> consumers;
+
+		public ConsumerMultiplexer(Consumer<Message> consumer1, Consumer<Message> consumer2) {
+			consumers = new ArrayList<>(Arrays.asList(consumer1, consumer2));
+		}
+
+		@Override
+		public void accept(Message message) {
+			for (Consumer<Message> consumer : consumers) {
+				try {
+					consumer.accept(message);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		public void add(Consumer<Message> consumer) {
+			this.consumers.add(consumer);
+		}
+	}
+
+	private static final Consumer<Message> NOOP = m -> {
+	};
 
 	private final MqttClient mqttClient;
-	private final List<Consumer<Message>> consumers = new CopyOnWriteArrayList<>();
+	private Consumer<Message> consumer = NOOP;
 
-	public MqttConsumer(String host, int port) throws IOException {
+	public MqttAdapter(String host, int port) throws IOException {
 		try {
 			mqttClient = new MqttClient("tcp://" + host + ":" + port, getClass().getName(), new MemoryPersistence());
 			mqttClient.setTimeToWait(SECONDS.toMillis(1));
@@ -43,9 +71,7 @@ public class MqttConsumer implements Consumer<Message>, MessageProvider, Closeab
 			@Override
 			public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
 				Message message = message(topic, new String(mqttMessage.getPayload()));
-				for (Consumer<Message> consumer : consumers) {
-					consumer.accept(message);
-				}
+				consumer.accept(message);
 			}
 
 			@Override
@@ -109,8 +135,14 @@ public class MqttConsumer implements Consumer<Message>, MessageProvider, Closeab
 	}
 
 	@Override
-	public void addConsumer(Consumer<Message> consumer) {
-		consumers.add(consumer);
+	public synchronized void addConsumer(Consumer<Message> consumer) {
+		if (this.consumer == NOOP) {
+			this.consumer = consumer;
+		} else if (this.consumer instanceof ConsumerMultiplexer) {
+			((ConsumerMultiplexer) this.consumer).add(consumer);
+		} else {
+			this.consumer = new ConsumerMultiplexer(this.consumer, consumer);
+		}
 	}
 
 }

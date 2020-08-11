@@ -9,7 +9,7 @@
     {
       "description": "the gameover message",
       "metaData": {
-        "contentType": "application/json; charset\u003dUTF-8"
+        "contentType": "application/json"
       },
       "contents": {
         "payload": "0,1,2,3",
@@ -22,14 +22,6 @@
       ],
       "matchingRules": {
         "body": {
-          "$.topic": {
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ],
-            "combine": "AND"
-          },
           "$.payload": {
             "matchers": [
               {
@@ -43,9 +35,9 @@
       }
     },
     {
-      "description": "the team\u0027s new score",
+      "description": "the team's new score",
       "metaData": {
-        "contentType": "application/json; charset\u003dUTF-8"
+        "contentType": "application/json"
       },
       "contents": {
         "payload": "2",
@@ -82,43 +74,21 @@
     {
       "description": "the foul message",
       "metaData": {
-        "contentType": "application/json; charset\u003dUTF-8"
+        "contentType": "application/json"
       },
       "contents": {
-        "payload": "",
         "topic": "game/foul"
       },
       "providerStates": [
         {
           "name": "a team fouled"
         }
-      ],
-      "matchingRules": {
-        "body": {
-          "$.topic": {
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ],
-            "combine": "AND"
-          },
-          "$.payload": {
-            "matchers": [
-              {
-                "match": "regex",
-                "regex": ".*"
-              }
-            ],
-            "combine": "AND"
-          }
-        }
-      }
+      ]
     },
     {
       "description": "the gameover message",
       "metaData": {
-        "contentType": "application/json; charset\u003dUTF-8"
+        "contentType": "application/json"
       },
       "contents": {
         "payload": "1",
@@ -131,14 +101,6 @@
       ],
       "matchingRules": {
         "body": {
-          "$.topic": {
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ],
-            "combine": "AND"
-          },
           "$.payload": {
             "matchers": [
               {
@@ -154,7 +116,7 @@
     {
       "description": "the idle message",
       "metaData": {
-        "contentType": "application/json; charset\u003dUTF-8"
+        "contentType": "application/json"
       },
       "contents": {
         "payload": "true",
@@ -164,19 +126,7 @@
         {
           "name": "the table is idle"
         }
-      ],
-      "matchingRules": {
-        "body": {
-          "$.topic": {
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ],
-            "combine": "AND"
-          }
-        }
-      }
+      ]
     }
   ],
   "metadata": {
@@ -184,7 +134,7 @@
       "version": "3.0.0"
     },
     "pact-jvm": {
-      "version": "4.0.0"
+      "version": "4.0.10"
     }
   }
 }

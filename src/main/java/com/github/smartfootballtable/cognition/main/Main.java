@@ -2,7 +2,6 @@ package com.github.smartfootballtable.cognition.main;
 
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
 import static com.github.smartfootballtable.cognition.main.EnvVars.envVarsAndArgs;
-import static com.github.smartfootballtable.cognition.main.MqttProcessor.processMqtt;
 import static org.kohsuke.args4j.OptionHandlerFilter.ALL;
 import static org.kohsuke.args4j.ParserProperties.defaults;
 
@@ -12,13 +11,14 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
+import com.github.smartfootballtable.cognition.Messages;
 import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.unit.DistanceUnit;
 import com.github.smartfootballtable.cognition.detector.GoalDetector;
-import com.github.smartfootballtable.cognition.mqtt.MqttConsumer;
-import com.github.smartfootballtable.cognition.queue.QueueConsumer;
+import com.github.smartfootballtable.cognition.mqtt.MqttAdapter;
+import com.github.smartfootballtable.cognition.queue.ConsumerQueueDecorator;
 
 public class Main {
 
@@ -39,7 +39,7 @@ public class Main {
 
 	private SFTCognition cognition;
 
-	private MqttConsumer mqttConsumer;
+	private MqttAdapter mqttAdapter;
 
 	public static void main(String... args) throws IOException {
 		Main main = new Main();
@@ -64,28 +64,33 @@ public class Main {
 	}
 
 	void doMain() throws IOException {
-		mqttConsumer = newMqttConsumer();
-		cognition = newCognition(mqttConsumer);
+		mqttAdapter = newMqttAdapter();
+		cognition = newCognition(mqttAdapter);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownHook()));
-		processMqtt(cognition, mqttConsumer);
+		Messages messages = cognition.messages();
+		mqttAdapter.addConsumer(m -> {
+			if (messages.isRelativePosition(m)) {
+				cognition.process(messages.parsePosition(m.getPayload()));
+			}
+		});
 	}
 
-	private SFTCognition newCognition(MqttConsumer mqttConsumer) {
+	private SFTCognition newCognition(MqttAdapter mqttAdapter) {
 		return new SFTCognition(new Table(tableWidth, tableHeight, tableUnit),
-				new QueueConsumer<Message>(mqttConsumer, 300)).receiver(mqttConsumer)
+				new ConsumerQueueDecorator<Message>(mqttAdapter, 300)).receiver(mqttAdapter)
 						.withGoalConfig(new GoalDetector.Config().frontOfGoalPercentage(40));
 	}
 
-	private MqttConsumer newMqttConsumer() throws IOException {
-		return new MqttConsumer(mqttHost, mqttPort);
+	private MqttAdapter newMqttAdapter() throws IOException {
+		return new MqttAdapter(mqttHost, mqttPort);
 	}
 
 	public SFTCognition cognition() {
 		return cognition;
 	}
 
-	public MqttConsumer mqttConsumer() {
-		return mqttConsumer;
+	public MqttAdapter mqttAdapter() {
+		return mqttAdapter;
 	}
 
 	protected void shutdownHook() {
