@@ -135,7 +135,7 @@
 					<groups>!in-progress</groups>
 					<excludedGroups>pbt</excludedGroups>
 					<systemPropertyVariables>
-						<junit.jupiter.execution.timeout.default>1m</junit.jupiter.execution.timeout.default>
+						<junit.jupiter.execution.timeout.default>5m</junit.jupiter.execution.timeout.default>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
