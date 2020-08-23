@@ -25,6 +25,16 @@ class ArchitectureTest {
 			.should(notDependOnClassesInSamePackage()) //
 	;
 
+	@ArchTest
+	ArchRule detectorsShouldBeNamedAccordinglyAndResideInTheInterfacesPackage = classes() //
+			.that().implement(Detector.class) //
+			.should().haveSimpleNameEndingWith("Detector") //
+			.andShould().resideInAPackage(Detector.class.getPackage().getName());
+
+	String detectorPackage() {
+		return "com.github.smartfootballtable.cognition.detector";
+	};
+
 	private ArchCondition<JavaClass> notDependOnClassesInSamePackage() {
 		return new ArchCondition<JavaClass>("not depend on classes in same package") {
 			@Override
