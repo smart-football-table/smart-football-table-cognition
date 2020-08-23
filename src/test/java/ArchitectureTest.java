@@ -26,7 +26,7 @@ class ArchitectureTest {
 	;
 
 	private ArchCondition<JavaClass> notDependOnClassesInSamePackage() {
-		return new ArchCondition<JavaClass>("depend on classes in same package") {
+		return new ArchCondition<JavaClass>("not depend on classes in same package") {
 			@Override
 			public void check(JavaClass item, ConditionEvents events) {
 				for (Dependency dependency : item.getDirectDependenciesFromSelf()) {
