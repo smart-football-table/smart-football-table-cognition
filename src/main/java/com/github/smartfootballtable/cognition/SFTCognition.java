@@ -7,8 +7,6 @@ import static com.github.smartfootballtable.cognition.detector.MovementDetector.
 import static com.github.smartfootballtable.cognition.detector.PositionDetector.onPositionChange;
 
 import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
