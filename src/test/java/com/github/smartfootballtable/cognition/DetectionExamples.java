@@ -527,10 +527,9 @@ class DetectionExamples {
 			}
 
 			private GameSituationBuilder addSequence() {
-				SizableArbitrary<List<OffsetPos>> list = arbitrary.list();
+				SizableArbitrary<List<OffsetPos>> list = unique ? arbitrary.list().uniqueElements() : arbitrary.list();
 				list = minSize == null ? list : list.ofMinSize(minSize);
 				Arbitrary<List<OffsetPos>> seq = maxSize == null ? list : list.ofMaxSize(maxSize);
-				seq = unique ? seq.unique() : seq;
 				return GameSituationBuilder.this.addSequence(seq);
 			}
 
