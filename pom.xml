@@ -13,6 +13,13 @@
 		<image>docker.io/smart-football-table/${project.artifactId}:latest</image>
 	</properties>
 
+	<repositories>
+		<repository>
+			<id>sonatype-snapshots</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
+
 	<profiles>
 		<profile>
 			<id>x86</id>
@@ -81,7 +88,11 @@
 		<dependency>
 			<groupId>net.jqwik</groupId>
 			<artifactId>jqwik</artifactId>
+<!--
+			<version>1.4.0</version>
 			<version>1.5.0</version>
+-->
+			<version>1.5.1-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -137,6 +148,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.22.2</version>
 				<configuration>
+					<argLine>-Xmx2G</argLine>
 					<useSystemClassLoader>false</useSystemClassLoader>
 					<includes>
 						<include>**/Test*.java</include>
