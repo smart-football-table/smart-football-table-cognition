@@ -5,9 +5,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -29,7 +29,7 @@ public class MqttAdapter implements Consumer<Message>, MessageProvider, Closeabl
 		private final List<Consumer<Message>> consumers;
 
 		public ConsumerMultiplexer(Consumer<Message> consumer1, Consumer<Message> consumer2) {
-			consumers = new ArrayList<>(Arrays.asList(consumer1, consumer2));
+			consumers = new CopyOnWriteArrayList<>(Arrays.asList(consumer1, consumer2));
 		}
 
 		@Override
@@ -57,7 +57,7 @@ public class MqttAdapter implements Consumer<Message>, MessageProvider, Closeabl
 	public MqttAdapter(String host, int port) throws IOException {
 		try {
 			mqttClient = new MqttClient("tcp://" + host + ":" + port, getClass().getName(), new MemoryPersistence());
-			mqttClient.setTimeToWait(SECONDS.toMillis(1));
+			mqttClient.setTimeToWait(SECONDS.toMillis(5));
 			mqttClient.setCallback(callback());
 			mqttClient.connect(connectOptions());
 		} catch (MqttException e) {
@@ -144,5 +144,6 @@ public class MqttAdapter implements Consumer<Message>, MessageProvider, Closeabl
 			this.consumer = new ConsumerMultiplexer(this.consumer, consumer);
 		}
 	}
+
 
 }
