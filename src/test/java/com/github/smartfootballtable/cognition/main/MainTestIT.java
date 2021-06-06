@@ -52,8 +52,8 @@ import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.mqtt.MqttAdapter;
 
-import io.moquette.server.Server;
-import io.moquette.server.config.MemoryConfig;
+import io.moquette.broker.Server;
+import io.moquette.broker.config.MemoryConfig;
 
 class MainTestIT {
 
