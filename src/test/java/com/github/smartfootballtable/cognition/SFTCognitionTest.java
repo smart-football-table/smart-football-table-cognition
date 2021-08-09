@@ -304,18 +304,18 @@ class SFTCognitionTest {
 	@Test
 	void overallDistance() throws IOException {
 		givenATableOfSize(100, 80, CENTIMETER);
-		makeDiamondMoveOnTableIn();
+		makeDiamondMoveOnTable();
 		thenPayloadsWithTopicAre("ball/distance/overall/cm", "8.00", "18.00", "26.00", "36.00");
 	}
 
 	@Test
 	void overallDistanceIsSentInInchWhenTableIsImperial() throws IOException {
 		givenATableOfSize(100, 80, INCHES);
-		makeDiamondMoveOnTableIn();
+		makeDiamondMoveOnTable();
 		thenPayloadsWithTopicAre("ball/distance/overall/inch", "8.00", "18.00", "26.00", "36.00");
 	}
 
-	private void makeDiamondMoveOnTableIn() throws IOException {
+	private void makeDiamondMoveOnTable() throws IOException {
 		BallPosBuilder base = kickoff();
 		givenInputToProcessIs(ball() //
 				.at(base.left(0.1)) //
