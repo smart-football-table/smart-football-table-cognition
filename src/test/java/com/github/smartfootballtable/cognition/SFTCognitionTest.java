@@ -304,18 +304,18 @@ class SFTCognitionTest {
 	@Test
 	void overallDistance() throws IOException {
 		givenATableOfSize(100, 80, CENTIMETER);
-		makeDiamondMoveOnTable();
+		makeDiamondMoveOnTableIn();
 		thenPayloadsWithTopicAre("ball/distance/overall/cm", "8.00", "18.00", "26.00", "36.00");
 	}
 
 	@Test
 	void overallDistanceIsSentInInchWhenTableIsImperial() throws IOException {
 		givenATableOfSize(100, 80, INCHES);
-		makeDiamondMoveOnTable();
+		makeDiamondMoveOnTableIn();
 		thenPayloadsWithTopicAre("ball/distance/overall/inch", "8.00", "18.00", "26.00", "36.00");
 	}
 
-	private void makeDiamondMoveOnTable() throws IOException {
+	private void makeDiamondMoveOnTableIn() throws IOException {
 		BallPosBuilder base = kickoff();
 		givenInputToProcessIs(ball() //
 				.at(base.left(0.1)) //
@@ -330,7 +330,7 @@ class SFTCognitionTest {
 	void canDetectGoalOnLeftHandSide() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball().prepareForLeftGoal().score());
+		givenInputToProcessIs(ball().prepareForLeftGoal().then().score());
 		whenInputWasProcessed();
 		thenGoalForTeamIsPublished(0);
 		thenPayloadsWithTopicAre(scoreOfTeam(0), "1");
@@ -359,7 +359,7 @@ class SFTCognitionTest {
 	void noGoalIfBallWasNotInFrontOfGoalLeftHandSide() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball().prepareForLeftGoal().then().at(frontOfLeftGoal().right(0.01)).score());
+		givenInputToProcessIs(ball().prepareForLeftGoal().then().at(frontOfLeftGoal().right(0.01)).then().score());
 		whenInputWasProcessed();
 		thenNoMessageWithTopicIsSent(teamScored());
 	}
