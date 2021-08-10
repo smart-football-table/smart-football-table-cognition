@@ -125,9 +125,7 @@ class MqttAdapterTest {
 	}
 
 	private Consumer<Message> aConsumerThatThrows(Supplier<RuntimeException> supplier) {
-		return m -> {
-			throw supplier.get();
-		};
+		return m -> throw supplier.get();
 	}
 
 	private Consumer<Message> aConsumerThatCollectsTo(List<Message> messages) {
