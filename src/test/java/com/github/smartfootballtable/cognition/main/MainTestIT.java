@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
@@ -162,10 +163,7 @@ class MainTestIT {
 				throw new RuntimeException(e);
 			}
 		});
-		await().until(() -> {
-			MqttAdapter adapter = main.mqttAdapter();
-			return adapter != null && adapter.isConnected();
-		});
+		await().until(() -> Optional.ofNullable(main.mqttAdapter()).filter(a->a.isConnected()).isPresent());
 	}
 
 	private Main newMain() {
@@ -189,7 +187,7 @@ class MainTestIT {
 		}
 	}
 
-	private int randomPort() throws IOException {
+	private static int randomPort() throws IOException {
 		try (ServerSocket socket = new ServerSocket(0);) {
 			return socket.getLocalPort();
 		}
@@ -286,15 +284,15 @@ class MainTestIT {
 		await().until(() -> messagesWithTopicOf(secondClient, "game/start").count(), is(1L));
 	}
 
-	private int anyAmount() {
+	private static int anyAmount() {
 		return 5;
 	}
 
-	private Stream<Message> messagesWithTopicOf(MqttClientForTest mqttClient, String topic) {
+	private static Stream<Message> messagesWithTopicOf(MqttClientForTest mqttClient, String topic) {
 		return messagesWithTopic(mqttClient.getReceived(), topic);
 	}
 
-	private Stream<Message> messagesWithTopic(List<Message> messages, String topic) {
+	private static Stream<Message> messagesWithTopic(List<Message> messages, String topic) {
 		return messages.stream().filter(m -> m.isTopic(topic));
 	}
 
@@ -327,11 +325,11 @@ class MainTestIT {
 		secondClient.publish(topic, new MqttMessage(payload.getBytes()));
 	}
 
-	private Stream<RelativePosition> positions(int count) {
+	private static Stream<RelativePosition> positions(int count) {
 		return provider(count, () -> create(currentTimeMillis(), 0.2, 0.3));
 	}
 
-	private Stream<RelativePosition> provider(int count, Supplier<RelativePosition> supplier) {
+	private static Stream<RelativePosition> provider(int count, Supplier<RelativePosition> supplier) {
 		return range(0, count).peek(i -> sleep()).mapToObj(i -> supplier.get());
 	}
 
