@@ -1,4 +1,4 @@
-package com.github.smartfootballtable.cognition.mqtt;
+package com.github.smartfootballtable.cognition.queue;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;

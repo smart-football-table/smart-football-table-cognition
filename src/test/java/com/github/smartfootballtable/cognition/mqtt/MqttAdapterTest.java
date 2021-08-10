@@ -1,4 +1,4 @@
-package com.github.smartfootballtable.cognition.queue;
+package com.github.smartfootballtable.cognition.mqtt;
 
 import static com.github.smartfootballtable.cognition.MessageMother.relativePosition;
 import static com.github.smartfootballtable.cognition.data.Message.message;
