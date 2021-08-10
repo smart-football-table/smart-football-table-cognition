@@ -163,7 +163,7 @@ class MainTestIT {
 				throw new RuntimeException(e);
 			}
 		});
-		await().until(() -> Optional.ofNullable(main.mqttAdapter()).filter(a->a.isConnected()).isPresent());
+		await().until(() -> Optional.ofNullable(main.mqttAdapter()).filter(MqttAdapter::isConnected).isPresent());
 	}
 
 	private Main newMain() {
