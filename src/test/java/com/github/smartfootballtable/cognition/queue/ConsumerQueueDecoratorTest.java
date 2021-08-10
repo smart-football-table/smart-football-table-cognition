@@ -13,8 +13,6 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.smartfootballtable.cognition.queue.ConsumerQueueDecorator;
-
 class ConsumerQueueDecoratorTest {
 
 	@Test
