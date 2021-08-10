@@ -10,8 +10,11 @@ import static org.junit.Assert.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.smartfootballtable.cognition.main.Main;
-
+/**
+ * Verifies if Main takes care of environment variables set.
+ * 
+ * @author Peter Fichtner
+ */
 class MainTest {
 
 	private static final String ENV_MQTTPORT = "MQTTPORT";
