@@ -7,6 +7,7 @@ import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.create;
 import static com.github.smartfootballtable.cognition.data.position.RelativePosition.noPosition;
 import static com.github.smartfootballtable.cognition.data.unit.DistanceUnit.CENTIMETER;
+import static com.github.smartfootballtable.cognition.main.MainTestIT.Broker.brokerOnRandomPort;
 import static com.github.stefanbirkner.systemlambda.SystemLambda.muteSystemErr;
 import static io.moquette.BrokerConstants.HOST_PROPERTY_NAME;
 import static io.moquette.BrokerConstants.PORT_PROPERTY_NAME;
@@ -21,6 +22,7 @@ import static java.util.stream.IntStream.range;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Awaitility.setDefaultTimeout;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
@@ -33,7 +35,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -50,6 +51,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.mqtt.MqttAdapter;
@@ -60,10 +62,82 @@ import io.moquette.broker.config.MemoryConfig;
 
 class MainTestIT {
 
+	private static class MainRunner<T> implements Closeable {
+
+		private final T main;
+		private final CompletableFuture<Void> completableFuture;
+
+		public MainRunner(T main, Consumer<T> callable) {
+			this.main = main;
+			completableFuture = runAsync(() -> {
+				try {
+					callable.accept(main);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			});
+		}
+
+		@Override
+		public void close() throws IOException {
+			completableFuture.cancel(true);
+		}
+
+	}
+
+	public static class Broker implements Closeable {
+
+		private final int brokerPort;
+		private final IConfig config;
+		private final Server server;
+
+		public static Broker brokerOnRandomPort() throws IOException {
+			return new Broker(randomPort());
+		}
+
+		public Broker(int brokerPort) throws IOException {
+			this.brokerPort = brokerPort;
+			this.config = config(LOCALHOST, brokerPort);
+			this.server = newMqttServer(config);
+		}
+
+		private static int randomPort() {
+			try (ServerSocket socket = new ServerSocket(0)) {
+				return socket.getLocalPort();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		private static Server newMqttServer(IConfig config) throws IOException {
+			Server server = new Server();
+			server.startServer(config);
+			return server;
+		}
+
+		private static IConfig config(String host, int port) {
+			Properties properties = new Properties();
+			properties.setProperty(HOST_PROPERTY_NAME, host);
+			properties.setProperty(PORT_PROPERTY_NAME, String.valueOf(port));
+			return new MemoryConfig(properties);
+		}
+
+		@Override
+		public void close() throws IOException {
+			server.stopServer();
+		}
+
+		public void restart() throws IOException {
+			server.stopServer();
+			server.startServer(config);
+		}
+
+	}
+
 	private static Duration timeout = ofMinutes(2);
 	private static final String LOCALHOST = "localhost";
 
-	static class MqttClientForTest implements Closeable {
+	private static class MqttClientForTest implements Closeable {
 
 		private final IMqttClient client;
 		private final List<Message> received = new CopyOnWriteArrayList<>();
@@ -82,36 +156,39 @@ class MainTestIT {
 				MqttClient client = new MqttClient("tcp://" + brokerHost + ":" + brokerPort, name,
 						new MemoryPersistence());
 				client.setTimeToWait(timeout.toMillis());
+				client.setCallback(callback(received, client));
 				client.connect(connectOptions());
-				client.setCallback(new MqttCallbackExtended() {
-
-					@Override
-					public void deliveryComplete(IMqttDeliveryToken token) {
-					}
-
-					@Override
-					public void messageArrived(String topic, MqttMessage message) throws Exception {
-						received.add(message(topic, new String(message.getPayload())));
-					}
-
-					@Override
-					public void connectComplete(boolean reconnect, String serverURI) {
-						try {
-							subscribe(client);
-						} catch (MqttException e) {
-							throw new RuntimeException(e);
-						}
-					}
-
-					@Override
-					public void connectionLost(Throwable cause) {
-					}
-				});
-				subscribe(client);
 				return client;
 			} catch (MqttException e) {
 				throw new IOException(e);
 			}
+		}
+
+		private MqttCallbackExtended callback(List<Message> received, MqttClient client) {
+			return new MqttCallbackExtended() {
+
+				@Override
+				public void deliveryComplete(IMqttDeliveryToken token) {
+				}
+
+				@Override
+				public void messageArrived(String topic, MqttMessage message) throws Exception {
+					received.add(message(topic, new String(message.getPayload())));
+				}
+
+				@Override
+				public void connectComplete(boolean reconnect, String serverURI) {
+					try {
+						subscribe(client);
+					} catch (MqttException e) {
+						throw new RuntimeException(e);
+					}
+				}
+
+				@Override
+				public void connectionLost(Throwable cause) {
+				}
+			};
 		}
 
 		private static MqttConnectOptions connectOptions() {
@@ -164,131 +241,98 @@ class MainTestIT {
 
 	}
 
-	private final int brokerPort = randomPort();
-
 	@BeforeAll
 	static void setup() throws Exception {
 		setDefaultTimeout(timeout.getSeconds(), SECONDS);
 	}
 
-	private static int randomPort() {
-		try (ServerSocket socket = new ServerSocket(0)) {
-			return socket.getLocalPort();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private Server newMqttServer(String host, int port) throws IOException {
-		Server server = new Server();
-		server.startServer(config(host, port));
-		return server;
-	}
-
-	private IConfig config(String host, int port) {
-		Properties properties = new Properties();
-		properties.setProperty(HOST_PROPERTY_NAME, host);
-		properties.setProperty(PORT_PROPERTY_NAME, String.valueOf(port));
-		return new MemoryConfig(properties);
-	}
-
 	@Test
-	void doesPublishAbsWhenReceivingRel() throws IOException, InterruptedException {
-		withBroker(b -> withClient("client2", c -> withMain((m, p) -> assertTimeoutPreemptively(timeout, () -> {
-			c.publish(relativePosition());
-			await().until(() -> payloads(c.getReceived(), TOPIC_BALL_POSITION_ABS), is(asList("14.76,31.01")));
-		}))));
-	}
-
-	@Test
-	void onResetTheNewGameIsStartedImmediatelyAndWithoutTableInteraction()
-			throws IOException, MqttPersistenceException, MqttException, InterruptedException {
-		withBroker(b -> withClient("client2", c -> withMain((m, p) -> assertTimeoutPreemptively(timeout, () -> {
-			c.publish(positions(anyAmount()));
-			assertReceivesGameStartWhenSendingReset(c);
-		}))));
-	}
-
-	@Test
-	void doesReconnectAndResubscribe()
-			throws IOException, InterruptedException, MqttPersistenceException, MqttException {
-		withBroker(b -> withClient("client2", c -> withMain((m, p) -> assertTimeoutPreemptively(timeout, () -> {
-			c.publish(positions(anyAmount()));
-			muteSystemErr(() -> {
-				restartBroker(b);
-				await().until(c::isConnected);
-				await().until(m.mqttAdapter()::isConnected);
+	void doesPublishAbsWhenReceivingRel() throws IOException {
+		try (Broker broker = brokerOnRandomPort();
+				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
+				MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+			assertTimeoutPreemptively(timeout, () -> {
+				client2.publish(relativePosition());
+				await().until(() -> payloads(client2.getReceived(), TOPIC_BALL_POSITION_ABS),
+						is(asList("14.76,31.01")));
 			});
-			assertReceivesGameStartWhenSendingReset(c);
-		}))));
+		}
 	}
 
 	@Test
-	void scoreMessagesAreRetained() throws IOException, InterruptedException, MqttPersistenceException, MqttException {
-		withBroker(b -> withClient("client2", c -> withMain((m, p) -> assertTimeoutPreemptively(timeout, () -> {
-			publishScoresAndShutdown(c, m, p);
-			try (MqttClientForTest thirdClient = new MqttClientForTest(LOCALHOST, brokerPort, "third-client")) {
-				List<Message> receivedRetained = thirdClient.getReceived();
-				await().until(() -> payloads(receivedRetained, scoreOfTeam(0)), is(asList("2")));
-				await().until(() -> payloads(receivedRetained, scoreOfTeam(1)), is(asList("3")));
-			}
-		}))));
+	void onResetTheNewGameIsStartedImmediatelyAlthoughThereIsNoFurtherTableInteractionAfterReset()
+			throws IOException, MqttPersistenceException, MqttException {
+		try (Broker broker = brokerOnRandomPort();
+				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
+				MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+			assertTimeoutPreemptively(timeout, () -> {
+				client2.publish(positions(anyAmount()));
+				assertReceivesGameStartWhenSendingReset(client2);
+			});
+		}
 	}
 
 	@Test
-	void doesRemoveRetainedMessages()
-			throws IOException, InterruptedException, MqttPersistenceException, MqttException {
-		withBroker(b -> withClient("client2", c -> withMain((m, p) -> assertTimeoutPreemptively(timeout, () -> {
-			publishScoresAndShutdown(c, m, p);
-			m.shutdownHook();
-			await().until(() -> {
-				try (MqttClientForTest thirdClient = new MqttClientForTest(LOCALHOST, brokerPort, "client3")) {
-					return thirdClient.getReceived();
+	void doesReconnectAndResubscribe() throws IOException, MqttPersistenceException, MqttException {
+		try (Broker broker = brokerOnRandomPort();
+				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
+				MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+			assertTimeoutPreemptively(timeout, () -> {
+				client2.publish(positions(anyAmount()));
+				muteSystemErr(() -> {
+					broker.restart();
+					await().until(client2::isConnected);
+					await().until(mainRunner.main.mqttAdapter()::isConnected);
+				});
+				assertReceivesGameStartWhenSendingReset(client2);
+			});
+		}
+	}
+
+	@Test
+	void scoreMessagesAreRetained() throws IOException, MqttPersistenceException, MqttException {
+		try (Broker broker = brokerOnRandomPort();
+				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
+				MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+			assertTimeoutPreemptively(timeout, () -> {
+				publishScoresAndShutdown(client2, mainRunner);
+				try (MqttClientForTest client3 = newClient(broker.brokerPort, "client3")) {
+					await().until(() -> payloads(client3.getReceived(), scoreOfTeam(0)), is(asList("2")));
+					await().until(() -> payloads(client3.getReceived(), scoreOfTeam(1)), is(asList("3")));
 				}
-			}, is(empty()));
-		}))));
-	}
-
-	// TODO make static
-	private void withBroker(Consumer<Server> consumer) {
-		try {
-			Server broker = newMqttServer(LOCALHOST, brokerPort);
-			consumer.accept(broker);
-			broker.stopServer();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+			});
 		}
 	}
 
-	// TODO make static
-	private void withClient(String clientId, Consumer<MqttClientForTest> runnable) {
-		try (MqttClientForTest client = new MqttClientForTest(LOCALHOST, brokerPort, clientId)) {
-			runnable.accept(client);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+	@Test
+	void doesRemoveRetainedMessagesWhenShuttingDown() throws IOException, MqttPersistenceException, MqttException {
+		try (Broker broker = brokerOnRandomPort();
+				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
+				MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+			assertTimeoutPreemptively(timeout, () -> {
+				publishScoresAndShutdown(client2, mainRunner);
+				mainRunner.main.shutdownHook();
+				await().until(() -> {
+					try (MqttClientForTest thirdClient = newClient(broker.brokerPort, "client3")) {
+						return thirdClient.getReceived();
+					}
+				}, is(empty()));
+			});
 		}
 	}
 
-	// TODO make static
-	private void withMain(BiConsumer<Main, CompletableFuture<?>> consumer) {
-		Main main = newMain();
-		CompletableFuture<Void> mainProcess = startMain(main);
-		await().until(() -> Optional.ofNullable(main.mqttAdapter()).filter(MqttAdapter::isConnected).isPresent());
-		consumer.accept(main, mainProcess);
-		mainProcess.cancel(true);
+	private static MqttClientForTest newClient(int brokerPort, String clientId) throws IOException {
+		return new MqttClientForTest(LOCALHOST, brokerPort, clientId);
 	}
 
-	private CompletableFuture<Void> startMain(Main main) {
-		return runAsync(() -> {
-			try {
-				main.doMain();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
+	private static MainRunner<Main> mainRunner(int brokerPort) {
+		MainRunner<Main> mainRunner = new MainRunner<>(newMain(brokerPort), MainTestIT::doMain);
+		await().until(
+				() -> Optional.ofNullable(mainRunner.main.mqttAdapter()).filter(MqttAdapter::isConnected).isPresent());
+		return mainRunner;
 	}
 
-	private Main newMain() {
+	private static Main newMain(int brokerPort) {
 		Main main = new Main();
 		main.mqttHost = LOCALHOST;
 		main.mqttPort = brokerPort;
@@ -298,24 +342,33 @@ class MainTestIT {
 		return main;
 	}
 
-	private void publishScoresAndShutdown(MqttClientForTest secondClient, Main main, CompletableFuture<?> mainProcess) {
-		main.cognition().messages().scoreChanged(0, 1, 2);
-		main.cognition().messages().scoreChanged(1, 2, 3);
-		await().until(() -> messagesWithTopicOf(secondClient, scoreOfTeam(0)).count(), is(1L));
-		await().until(() -> messagesWithTopicOf(secondClient, scoreOfTeam(1)).count(), is(1L));
-		mainProcess.cancel(true);
+	private static void doMain(Main main) {
+		try {
+			main.doMain();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void publishScoresAndShutdown(MqttClientForTest client, MainRunner<Main> mainRunner) throws IOException {
+		SFTCognition cognition = await().until(() -> mainRunner.main.cognition(), notNullValue());
+		cognition.messages().scoreChanged(0, 1, 2);
+		mainRunner.main.cognition().messages().scoreChanged(1, 2, 3);
+		await().until(() -> messagesWithTopicOf(client, scoreOfTeam(0)).count(), is(1L));
+		await().until(() -> messagesWithTopicOf(client, scoreOfTeam(1)).count(), is(1L));
+		mainRunner.close();
 	}
 
 	private List<String> payloads(List<Message> receivedRetained, String topic) {
 		return messagesWithTopic(receivedRetained, topic).map(Message::getPayload).collect(toList());
 	}
 
-	private void assertReceivesGameStartWhenSendingReset(MqttClientForTest secondClient)
-			throws InterruptedException, MqttPersistenceException, MqttException {
-		secondClient.getReceived().clear();
-		sendReset(secondClient);
-		secondClient.publish(provider(anyAmount(), () -> noPosition(currentTimeMillis())));
-		await().until(() -> messagesWithTopicOf(secondClient, "game/start").count(), is(1L));
+	private void assertReceivesGameStartWhenSendingReset(MqttClientForTest client)
+			throws MqttPersistenceException, MqttException {
+		client.getReceived().clear();
+		sendReset(client);
+		client.publish(provider(anyAmount(), () -> noPosition(currentTimeMillis())));
+		await().until(() -> messagesWithTopicOf(client, "game/start").count(), is(1L));
 	}
 
 	private static int anyAmount() {
@@ -328,11 +381,6 @@ class MainTestIT {
 
 	private static Stream<Message> messagesWithTopic(List<Message> messages, String topic) {
 		return messages.stream().filter(m -> m.isTopic(topic));
-	}
-
-	private void restartBroker(Server broker) throws IOException, InterruptedException {
-		broker.stopServer();
-		broker.startServer(config(LOCALHOST, brokerPort));
 	}
 
 	private void sendReset(MqttClientForTest client) throws MqttException, MqttPersistenceException {
