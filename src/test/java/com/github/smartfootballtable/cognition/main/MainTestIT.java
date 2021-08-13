@@ -26,7 +26,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.Duration;
@@ -35,6 +34,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -49,6 +49,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.github.smartfootballtable.cognition.SFTCognition;
@@ -62,7 +63,7 @@ import io.moquette.broker.config.MemoryConfig;
 
 class MainTestIT {
 
-	private static class MainRunner<T> implements Closeable {
+	private static class MainRunner<T> implements AutoCloseable {
 
 		private final T main;
 		private final CompletableFuture<Void> completableFuture;
@@ -85,7 +86,7 @@ class MainTestIT {
 
 	}
 
-	public static class Broker implements Closeable {
+	public static class Broker implements AutoCloseable {
 
 		private final int brokerPort;
 		private final IConfig config;
@@ -98,7 +99,8 @@ class MainTestIT {
 		public Broker(int brokerPort) throws IOException {
 			this.brokerPort = brokerPort;
 			this.config = config(LOCALHOST, brokerPort);
-			this.server = newMqttServer(config);
+			this.server = new Server();
+			start();
 		}
 
 		private static int randomPort() {
@@ -107,12 +109,6 @@ class MainTestIT {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
-		}
-
-		private static Server newMqttServer(IConfig config) throws IOException {
-			Server server = new Server();
-			server.startServer(config);
-			return server;
 		}
 
 		private static IConfig config(String host, int port) {
@@ -124,12 +120,20 @@ class MainTestIT {
 
 		@Override
 		public void close() throws IOException {
+			stop();
+		}
+
+		private void start() throws IOException {
+			server.startServer(config);
+		}
+
+		private void stop() {
 			server.stopServer();
 		}
 
 		public void restart() throws IOException {
-			server.stopServer();
-			server.startServer(config);
+			stop();
+			start();
 		}
 
 	}
@@ -137,7 +141,7 @@ class MainTestIT {
 	private static Duration timeout = ofMinutes(2);
 	private static final String LOCALHOST = "localhost";
 
-	private static class MqttClientForTest implements Closeable {
+	private static class MqttClientForTest implements AutoCloseable {
 
 		private final IMqttClient client;
 		private final List<Message> received = new CopyOnWriteArrayList<>();
@@ -250,7 +254,7 @@ class MainTestIT {
 	void doesPublishAbsWhenReceivingRel() throws IOException {
 		try (Broker broker = brokerOnRandomPort();
 				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
-				MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+				MainRunner<Main> mainRunner = awaitConnected(mainRunner(broker.brokerPort))) {
 			assertTimeoutPreemptively(timeout, () -> {
 				client2.publish(relativePosition());
 				await().until(() -> payloads(client2.getReceived(), TOPIC_BALL_POSITION_ABS),
@@ -264,7 +268,7 @@ class MainTestIT {
 			throws IOException, MqttPersistenceException, MqttException {
 		try (Broker broker = brokerOnRandomPort();
 				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
-				MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+				MainRunner<Main> mainRunner = awaitConnected(mainRunner(broker.brokerPort))) {
 			assertTimeoutPreemptively(timeout, () -> {
 				client2.publish(positions(anyAmount()));
 				assertReceivesGameStartWhenSendingReset(client2);
@@ -276,7 +280,7 @@ class MainTestIT {
 	void doesReconnectAndResubscribe() throws IOException, MqttPersistenceException, MqttException {
 		try (Broker broker = brokerOnRandomPort();
 				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
-				MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+				MainRunner<Main> mainRunner = awaitConnected(mainRunner(broker.brokerPort))) {
 			assertTimeoutPreemptively(timeout, () -> {
 				client2.publish(positions(anyAmount()));
 				muteSystemErr(() -> {
@@ -290,10 +294,25 @@ class MainTestIT {
 	}
 
 	@Test
+	@Disabled("not yet implemented")
+	void doesStartWithoutRunningBrokerAndConnectsToItLaterWhenStarted()
+			throws IOException, MqttPersistenceException, MqttException, InterruptedException {
+		try (Broker broker = brokerOnRandomPort()) {
+			broker.close();
+			TimeUnit.SECONDS.sleep(1);
+			try (MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+				TimeUnit.SECONDS.sleep(3);
+				broker.start();
+				awaitConnected(mainRunner);
+			}
+		}
+	}
+
+	@Test
 	void scoreMessagesAreRetained() throws IOException, MqttPersistenceException, MqttException {
 		try (Broker broker = brokerOnRandomPort();
 				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
-				MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+				MainRunner<Main> mainRunner = awaitConnected(mainRunner(broker.brokerPort))) {
 			assertTimeoutPreemptively(timeout, () -> {
 				publishScoresAndShutdown(client2, mainRunner);
 				try (MqttClientForTest client3 = newClient(broker.brokerPort, "client3")) {
@@ -308,7 +327,7 @@ class MainTestIT {
 	void doesRemoveRetainedMessagesWhenShuttingDown() throws IOException, MqttPersistenceException, MqttException {
 		try (Broker broker = brokerOnRandomPort();
 				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
-				MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+				MainRunner<Main> mainRunner = awaitConnected(mainRunner(broker.brokerPort))) {
 			assertTimeoutPreemptively(timeout, () -> {
 				publishScoresAndShutdown(client2, mainRunner);
 				mainRunner.main.shutdownHook();
@@ -326,7 +345,10 @@ class MainTestIT {
 	}
 
 	private static MainRunner<Main> mainRunner(int brokerPort) {
-		MainRunner<Main> mainRunner = new MainRunner<>(newMain(brokerPort), MainTestIT::doMain);
+		return new MainRunner<>(newMain(brokerPort), MainTestIT::doMain);
+	}
+
+	private static MainRunner<Main> awaitConnected(MainRunner<Main> mainRunner) {
 		await().until(
 				() -> Optional.ofNullable(mainRunner.main.mqttAdapter()).filter(MqttAdapter::isConnected).isPresent());
 		return mainRunner;
