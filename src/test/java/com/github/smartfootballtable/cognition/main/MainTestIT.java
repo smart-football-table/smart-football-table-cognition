@@ -93,10 +93,14 @@ class MainTestIT {
 		private final Server server;
 
 		public static Broker brokerOnRandomPort() throws IOException {
-			return new Broker(randomPort());
+			return brokerOnPort(randomPort());
 		}
 
-		public Broker(int brokerPort) throws IOException {
+		public static Broker brokerOnPort(int randomPort) throws IOException {
+			return new Broker(randomPort);
+		}
+
+		private Broker(int brokerPort) throws IOException {
 			this.brokerPort = brokerPort;
 			this.config = config(LOCALHOST, brokerPort);
 			this.server = new Server();
