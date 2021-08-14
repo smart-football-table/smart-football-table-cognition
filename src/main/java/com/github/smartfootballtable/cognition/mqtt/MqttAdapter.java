@@ -1,6 +1,7 @@
 package com.github.smartfootballtable.cognition.mqtt;
 
 import static com.github.smartfootballtable.cognition.data.Message.message;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.Closeable;
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -59,10 +61,32 @@ public class MqttAdapter implements Consumer<Message>, MessageProvider, Closeabl
 			mqttClient = new MqttClient("tcp://" + host + ":" + port, getClass().getName(), new MemoryPersistence());
 			mqttClient.setTimeToWait(SECONDS.toMillis(5));
 			mqttClient.setCallback(callback());
-			mqttClient.connect(connectOptions());
+			// connect in background, so even if the broker is not running at startup we
+			// will connect when it's available
+			connectInBackground();
 		} catch (MqttException e) {
 			throw new IOException(e);
 		}
+	}
+
+	private void connectInBackground() {
+		newSingleThreadExecutor().execute(() -> {
+			while (true) {
+				try {
+					mqttClient.connect(connectOptions());
+				} catch (MqttException e) {
+					e.printStackTrace();
+				}
+				if (mqttClient.isConnected()) {
+					break;
+				}
+				try {
+					TimeUnit.SECONDS.sleep(1);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+			}
+		});
 	}
 
 	private MqttCallback callback() {
@@ -144,6 +168,5 @@ public class MqttAdapter implements Consumer<Message>, MessageProvider, Closeabl
 			this.consumer = new ConsumerMultiplexer(this.consumer, consumer);
 		}
 	}
-
 
 }

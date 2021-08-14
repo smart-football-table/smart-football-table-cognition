@@ -49,7 +49,6 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.github.smartfootballtable.cognition.SFTCognition;
@@ -104,7 +103,6 @@ class MainTestIT {
 			this.brokerPort = brokerPort;
 			this.config = config(LOCALHOST, brokerPort);
 			this.server = new Server();
-			start();
 		}
 
 		private static int randomPort() {
@@ -127,12 +125,14 @@ class MainTestIT {
 			stop();
 		}
 
-		private void start() throws IOException {
+		public Broker start() throws IOException {
 			server.startServer(config);
+			return this;
 		}
 
-		private void stop() {
+		public Broker stop() {
 			server.stopServer();
+			return this;
 		}
 
 		public void restart() throws IOException {
@@ -142,7 +142,7 @@ class MainTestIT {
 
 	}
 
-	private static Duration timeout = ofMinutes(2);
+	private static Duration timeout = ofMinutes(5);
 	private static final String LOCALHOST = "localhost";
 
 	private static class MqttClientForTest implements AutoCloseable {
@@ -256,7 +256,7 @@ class MainTestIT {
 
 	@Test
 	void doesPublishAbsWhenReceivingRel() throws IOException {
-		try (Broker broker = brokerOnRandomPort();
+		try (Broker broker = brokerOnRandomPort().start();
 				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
 				MainRunner<Main> mainRunner = awaitConnected(mainRunner(broker.brokerPort))) {
 			assertTimeoutPreemptively(timeout, () -> {
@@ -270,7 +270,7 @@ class MainTestIT {
 	@Test
 	void onResetTheNewGameIsStartedImmediatelyAlthoughThereIsNoFurtherTableInteractionAfterReset()
 			throws IOException, MqttPersistenceException, MqttException {
-		try (Broker broker = brokerOnRandomPort();
+		try (Broker broker = brokerOnRandomPort().start();
 				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
 				MainRunner<Main> mainRunner = awaitConnected(mainRunner(broker.brokerPort))) {
 			assertTimeoutPreemptively(timeout, () -> {
@@ -282,7 +282,7 @@ class MainTestIT {
 
 	@Test
 	void doesReconnectAndResubscribe() throws IOException, MqttPersistenceException, MqttException {
-		try (Broker broker = brokerOnRandomPort();
+		try (Broker broker = brokerOnRandomPort().start();
 				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
 				MainRunner<Main> mainRunner = awaitConnected(mainRunner(broker.brokerPort))) {
 			assertTimeoutPreemptively(timeout, () -> {
@@ -298,23 +298,17 @@ class MainTestIT {
 	}
 
 	@Test
-	@Disabled("not yet implemented")
 	void doesStartWithoutRunningBrokerAndConnectsToItLaterWhenStarted()
 			throws IOException, MqttPersistenceException, MqttException, InterruptedException {
-		try (Broker broker = brokerOnRandomPort()) {
-			broker.close();
-			TimeUnit.SECONDS.sleep(1);
-			try (MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
-				TimeUnit.SECONDS.sleep(3);
-				broker.start();
-				awaitConnected(mainRunner);
-			}
+		try (Broker broker = brokerOnRandomPort(); MainRunner<Main> mainRunner = mainRunner(broker.brokerPort)) {
+			broker.start();
+			awaitConnected(mainRunner);
 		}
 	}
 
 	@Test
 	void scoreMessagesAreRetained() throws IOException, MqttPersistenceException, MqttException {
-		try (Broker broker = brokerOnRandomPort();
+		try (Broker broker = brokerOnRandomPort().start();
 				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
 				MainRunner<Main> mainRunner = awaitConnected(mainRunner(broker.brokerPort))) {
 			assertTimeoutPreemptively(timeout, () -> {
@@ -329,7 +323,7 @@ class MainTestIT {
 
 	@Test
 	void doesRemoveRetainedMessagesWhenShuttingDown() throws IOException, MqttPersistenceException, MqttException {
-		try (Broker broker = brokerOnRandomPort();
+		try (Broker broker = brokerOnRandomPort().start();
 				MqttClientForTest client2 = newClient(broker.brokerPort, "client2");
 				MainRunner<Main> mainRunner = awaitConnected(mainRunner(broker.brokerPort))) {
 			assertTimeoutPreemptively(timeout, () -> {
@@ -418,12 +412,12 @@ class MainTestIT {
 	}
 
 	private static Stream<RelativePosition> provider(int count, Supplier<RelativePosition> supplier) {
-		return range(0, count).peek(i -> sleep()).mapToObj(i -> supplier.get());
+		return range(0, count).peek(i -> sleep(10, MILLISECONDS)).mapToObj(i -> supplier.get());
 	}
 
-	private static void sleep() {
+	private static void sleep(int i, TimeUnit timeUnit) {
 		try {
-			MILLISECONDS.sleep(10);
+			timeUnit.sleep(i);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		}
