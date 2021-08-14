@@ -1,13 +1,17 @@
 package com.github.smartfootballtable.cognition.queue;
 
+import static com.github.smartfootballtable.cognition.util.Sleep.sleep;
+import static java.lang.Long.MAX_VALUE;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
@@ -16,25 +20,25 @@ import org.junit.jupiter.api.Test;
 class ConsumerQueueDecoratorTest {
 
 	@Test
-	void singleElementInQueueOfSize1() throws InterruptedException {
+	void singleElementInQueueOfSize1() {
 		List<String> strings = new ArrayList<>();
 		consumeFromSut(addTo(strings), 1).accept("test");
-		TimeUnit.MILLISECONDS.sleep(50);
+		sleep(50, MILLISECONDS);
 		assertThat(strings, is(asList("test")));
 	}
 
 	@Test
-	void whenBlockingWillAcceptAsManyElementsAsTheQueueHasSize() throws InterruptedException {
+	void whenBlockingWillAcceptAsManyElementsAsTheQueueHasSize() {
 		int queueSize = 10;
 		List<String> strings = new ArrayList<>();
 		Consumer<String> queued = consumeFromSut(sleepVeryLong().andThen(addTo(strings)), queueSize);
 		fillQueue(queued, queueSize);
-		TimeUnit.MILLISECONDS.sleep(50);
+		sleep(50, MILLISECONDS);
 		assertThat(strings, is(emptyList()));
 	}
 
 	@Test
-	void whenBlockingAndTheQueueIsFullNoMoreElementsAreAccepted() throws InterruptedException {
+	void whenBlockingAndTheQueueIsFullNoMoreElementsAreAccepted() {
 		int queueSize = 10;
 		List<String> strings = new ArrayList<>();
 		Consumer<String> queued = consumeFromSut(sleepVeryLong().andThen(addTo(strings)), queueSize);
@@ -42,7 +46,7 @@ class ConsumerQueueDecoratorTest {
 
 		Thread backgroundAdder = new Thread(() -> queued.accept("adding-last-element"));
 		backgroundAdder.start();
-		TimeUnit.SECONDS.sleep(5);
+		sleep(5, SECONDS);
 		assertThat(backgroundAdder.getState(), is(Thread.State.WAITING));
 		backgroundAdder.interrupt();
 	}
@@ -52,13 +56,7 @@ class ConsumerQueueDecoratorTest {
 	}
 
 	private Consumer<String> sleepVeryLong() {
-		return t -> {
-			try {
-				TimeUnit.DAYS.sleep(Long.MAX_VALUE);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-		};
+		return t -> sleep(MAX_VALUE, DAYS);
 	}
 
 	private Consumer<String> addTo(List<String> strings) {

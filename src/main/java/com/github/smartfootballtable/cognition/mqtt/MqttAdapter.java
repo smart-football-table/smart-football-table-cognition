@@ -1,6 +1,7 @@
 package com.github.smartfootballtable.cognition.mqtt;
 
 import static com.github.smartfootballtable.cognition.data.Message.message;
+import static com.github.smartfootballtable.cognition.util.Sleep.sleep;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -9,7 +10,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -80,11 +80,7 @@ public class MqttAdapter implements Consumer<Message>, MessageProvider, Closeabl
 				if (mqttClient.isConnected()) {
 					break;
 				}
-				try {
-					TimeUnit.SECONDS.sleep(1);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-				}
+				sleep(1, SECONDS);
 			}
 		});
 	}

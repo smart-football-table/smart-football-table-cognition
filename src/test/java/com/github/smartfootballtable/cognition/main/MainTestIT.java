@@ -34,7 +34,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -55,6 +54,7 @@ import com.github.smartfootballtable.cognition.SFTCognition;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
 import com.github.smartfootballtable.cognition.mqtt.MqttAdapter;
+import com.github.smartfootballtable.cognition.util.Sleep;
 
 import io.moquette.broker.Server;
 import io.moquette.broker.config.IConfig;
@@ -412,15 +412,7 @@ class MainTestIT {
 	}
 
 	private static Stream<RelativePosition> provider(int count, Supplier<RelativePosition> supplier) {
-		return range(0, count).peek(i -> sleep(10, MILLISECONDS)).mapToObj(i -> supplier.get());
-	}
-
-	private static void sleep(int i, TimeUnit timeUnit) {
-		try {
-			timeUnit.sleep(i);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		}
+		return range(0, count).peek(i -> Sleep.sleep(10, MILLISECONDS)).mapToObj(i -> supplier.get());
 	}
 
 }
