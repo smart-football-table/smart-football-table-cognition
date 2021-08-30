@@ -1,6 +1,6 @@
 # Smart Football Table - Cognition
 
-[![Build Status](https://travis-ci.com/smart-football-table/smart-football-table-cognition.svg?branch=master)](https://travis-ci.com/smart-football-table/smart-football-table-cognition)
+![Build Status](https://github.com/smart-football-table/smart-football-table-cognition/actions/workflows/maven.yml/badge.svg)
 [![BCH compliance](https://bettercodehub.com/edge/badge/smart-football-table/smart-football-table-cognition?branch=master)](https://bettercodehub.com/)
 [![codecov](https://codecov.io/gh/smart-football-table/smart-football-table-cognition/branch/master/graph/badge.svg)](https://codecov.io/gh/smart-football-table/smart-football-table-cognition)
 [![Maintainability](https://api.codeclimate.com/v1/badges/448ac668cd07bdea8577/maintainability)](https://codeclimate.com/github/smart-football-table/smart-football-table-cognition/maintainability)
