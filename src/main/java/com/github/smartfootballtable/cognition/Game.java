@@ -120,6 +120,7 @@ public abstract class Game {
 
 			@Override
 			public void scoreChanged(int teamid, int oldScore, int newScore) {
+				// not interested on new scores
 			}
 
 			@Override

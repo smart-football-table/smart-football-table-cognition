@@ -96,10 +96,12 @@ public class MqttAdapter implements Consumer<Message>, MessageProvider, Closeabl
 
 			@Override
 			public void deliveryComplete(IMqttDeliveryToken token) {
+				// noop
 			}
 
 			@Override
 			public void connectionLost(Throwable cause) {
+				// noop
 			}
 
 			@Override

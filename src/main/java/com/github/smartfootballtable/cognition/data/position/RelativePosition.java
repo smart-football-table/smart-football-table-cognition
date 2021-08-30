@@ -34,22 +34,29 @@ public abstract class RelativePosition implements Position {
 
 		@Override
 		public RelativePosition normalizeX() {
-			throw new UnsupportedOperationException();
+			throw newUnsupportedOperationException();
 		}
 
 		@Override
 		public RelativePosition normalizeY() {
-			throw new UnsupportedOperationException();
+			throw newUnsupportedOperationException();
 		}
 
 		@Override
 		public boolean isLeftHandSide() {
-			throw new UnsupportedOperationException();
+			throw newUnsupportedOperationException();
+		}
+
+		private RuntimeException newUnsupportedOperationException() {
+			return new UnsupportedOperationException();
 		}
 
 	}
 
 	private static class Present extends RelativePosition {
+
+		private static final double CENTER_X = 0.5;
+		private static final double CENTER_Y = 0.5;
 
 		private final double x;
 		private final double y;
@@ -76,23 +83,15 @@ public abstract class RelativePosition implements Position {
 		}
 
 		public RelativePosition normalizeX() {
-			return create(getTimestamp(), centerX() + abs(centerX() - x), y);
+			return create(getTimestamp(), CENTER_X + abs(CENTER_X - x), y);
 		}
 
 		public RelativePosition normalizeY() {
-			return create(getTimestamp(), x, centerY() + abs(centerY() - y));
+			return create(getTimestamp(), x, CENTER_Y + abs(CENTER_Y - y));
 		}
 
 		public boolean isLeftHandSide() {
-			return getX() < centerX();
-		}
-
-		private double centerX() {
-			return 0.5;
-		}
-
-		private double centerY() {
-			return 0.5;
+			return getX() < CENTER_X;
 		}
 
 	}
@@ -143,7 +142,7 @@ public abstract class RelativePosition implements Position {
 
 	@Generated
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)

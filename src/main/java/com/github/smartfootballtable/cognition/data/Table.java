@@ -8,7 +8,8 @@ import lombok.Generated;
 
 public class Table {
 
-	private final double width, height;
+	private final double width;
+	private final double height;
 	private final DistanceUnit distanceUnit;
 
 	public Table(double width, double height, DistanceUnit distanceUnit) {

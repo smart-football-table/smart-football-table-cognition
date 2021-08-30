@@ -13,7 +13,6 @@ import org.kohsuke.args4j.Option;
 
 import com.github.smartfootballtable.cognition.Messages;
 import com.github.smartfootballtable.cognition.SFTCognition;
-import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.unit.DistanceUnit;
 import com.github.smartfootballtable.cognition.detector.GoalDetector;
@@ -66,7 +65,7 @@ public class Main {
 	void doMain() throws IOException {
 		mqttAdapter = newMqttAdapter();
 		cognition = newCognition(mqttAdapter);
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownHook()));
+		Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
 		Messages messages = cognition.messages();
 		mqttAdapter.addConsumer(m -> {
 			if (messages.isRelativePosition(m)) {
@@ -77,7 +76,7 @@ public class Main {
 
 	private SFTCognition newCognition(MqttAdapter mqttAdapter) {
 		return new SFTCognition(new Table(tableWidth, tableHeight, tableUnit),
-				new ConsumerQueueDecorator<Message>(mqttAdapter, 300)).receiver(mqttAdapter)
+				new ConsumerQueueDecorator<>(mqttAdapter, 300)).receiver(mqttAdapter)
 						.withGoalConfig(new GoalDetector.Config().frontOfGoalPercentage(40));
 	}
 

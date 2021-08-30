@@ -53,6 +53,10 @@ public class IdleDetector implements Detector {
 							: this;
 		}
 
+		private boolean timeoutReached(AbsolutePosition pos, long offTableSince) {
+			return timestampDiff(pos, offTableSince) >= idleWhen;
+		}
+
 	}
 
 	private class Idle implements State {
@@ -86,10 +90,6 @@ public class IdleDetector implements Detector {
 	}
 
 	private final long idleWhen = MINUTES.toMillis(1);
-
-	private boolean timeoutReached(AbsolutePosition pos, long offTableSince) {
-		return timestampDiff(pos, offTableSince) >= idleWhen;
-	}
 
 	private long timestampDiff(AbsolutePosition pos, long offTableSince) {
 		return pos.getTimestamp() - offTableSince;

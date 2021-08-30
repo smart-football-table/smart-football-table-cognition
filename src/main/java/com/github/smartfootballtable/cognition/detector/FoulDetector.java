@@ -28,12 +28,7 @@ public class FoulDetector implements Detector {
 
 	private final FoulDetector.Listener listener;
 
-	private State state = new State() {
-		@Override
-		public State update(AbsolutePosition pos) {
-			return new Moving(pos);
-		}
-	};
+	private State state = pos -> new Moving(pos);
 
 	private FoulDetector(FoulDetector.Listener listener) {
 		this.listener = listener;

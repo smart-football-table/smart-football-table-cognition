@@ -29,7 +29,7 @@ public class SFTCognition {
 				onMovement(table.getDistanceUnit(), messages::movement), //
 				onFoul(messages::foul), //
 				onIdle(messages::idle) //
-		).addScoreTracker(scoreTracker(messages, consumer));
+		).addScoreTracker(scoreTracker(messages));
 	}
 
 	public Messages messages() {
@@ -47,7 +47,7 @@ public class SFTCognition {
 		}
 	}
 
-	private ScoreTracker.Listener scoreTracker(Messages messages, Consumer<Message> consumer) {
+	private ScoreTracker.Listener scoreTracker(Messages messages) {
 		return new ScoreTracker.Listener() {
 
 			@Override
