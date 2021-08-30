@@ -32,7 +32,8 @@ public class ConsumerQueueDecorator<T> implements Consumer<T> {
 		try {
 			return blockingQueue.take();
 		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
+			Thread.currentThread().interrupt();
+			return null;
 		}
 	}
 
