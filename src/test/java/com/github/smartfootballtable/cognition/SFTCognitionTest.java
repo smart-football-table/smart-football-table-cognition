@@ -392,16 +392,12 @@ class SFTCognitionTest {
 		givenFrontOfGoalPercentage(20);
 		long timeout = SECONDS.toMillis(2);
 		givenTimeWithoutBallTilGoal(timeout, MILLISECONDS);
-		long oneMsMeforeTimeout = timeout - 1;
-		givenInputToProcessIs(ball()
-				//
-				.prepareForLeftGoal().then(offTable()).thenAfterMillis(oneMsMeforeTimeout).then(offTable()).then()
-				//
-				.prepareForRightGoal().then(offTable()).thenAfterMillis(oneMsMeforeTimeout).then(offTable()).then()
-				//
-				.prepareForLeftGoal().then(offTable()).thenAfterMillis(oneMsMeforeTimeout).then(kickoff()).then()
-				//
-				.prepareForRightGoal().then(offTable()).thenAfterMillis(oneMsMeforeTimeout).then(kickoff()) //
+		long oneMsBeforeTimeout = timeout - 1;
+		givenInputToProcessIs(ball() //
+				.prepareForLeftGoal().then(offTable()).thenAfterMillis(oneMsBeforeTimeout).then(offTable()).then() //
+				.prepareForRightGoal().then(offTable()).thenAfterMillis(oneMsBeforeTimeout).then(offTable()).then() //
+				.prepareForLeftGoal().then(offTable()).thenAfterMillis(oneMsBeforeTimeout).then(kickoff()).then() //
+				.prepareForRightGoal().then(offTable()).thenAfterMillis(oneMsBeforeTimeout).then(kickoff()) //
 		);
 		whenInputWasProcessed();
 		thenNoMessageWithTopicIsSent(teamScored());
