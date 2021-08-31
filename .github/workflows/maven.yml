@@ -32,14 +32,14 @@ jobs:
         path: ~/.sonar/cache
         key: ${{ runner.os }}-sonar
         restore-keys: ${{ runner.os }}-sonar
-    - name: Build with Maven without Sonar
-      if: matrix.java-version != 42424242
+    - name: Build with Maven
+#     if: matrix.java-version != 42
       run: mvn -B package jib:dockerBuild --file pom.xml
-    - name: Build with Maven with Sonar
-      if: matrix.java-version == 42424242
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: mvn -B package jib:dockerBuild org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=smart-football-table_smart-football-table-cognition
+#   - name: Build with Maven with Sonar
+#     if: matrix.java-version == 42
+#     env:
+#       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#     run: mvn -B package jib:dockerBuild org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=smart-football-table_smart-football-table-cognition
     - name: Codecov
       uses: codecov/codecov-action@v2.0.3
