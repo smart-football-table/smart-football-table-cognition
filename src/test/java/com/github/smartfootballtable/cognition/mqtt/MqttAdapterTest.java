@@ -7,6 +7,7 @@ import static io.moquette.BrokerConstants.HOST_PROPERTY_NAME;
 import static io.moquette.BrokerConstants.PORT_PROPERTY_NAME;
 import static java.util.Arrays.asList;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -111,16 +112,18 @@ class MqttAdapterTest {
 	}
 
 	@Test
-	void stacktraceIsPrintedOnStdErrAndSecondConsumerIsCalled() throws Exception {
-		String exceptionText = "any " + UUID.randomUUID() + "text";
+	void stacktracesArePrintedOnStdErrAndThirdConsumerGetsCalled() throws Exception {
+		String exceptionText1 = "any " + UUID.randomUUID() + "text";
+		String exceptionText2 = "other " + UUID.randomUUID() + "text";
 		assertThat(tapSystemErr(() -> {
 			List<Message> messages = new ArrayList<>();
-			mqttAdapter.addConsumer(aConsumerThatThrows(() -> new NullPointerException(exceptionText)));
+			mqttAdapter.addConsumer(aConsumerThatThrows(() -> new NullPointerException(exceptionText1)));
+			mqttAdapter.addConsumer(aConsumerThatThrows(() -> new IllegalStateException(exceptionText2)));
 			mqttAdapter.addConsumer(aConsumerThatCollectsTo(messages));
 			Message relativePosition = relativePosition();
 			secondClient.publish(relativePosition.getTopic(), relativePosition.getPayload().getBytes(), 0, false);
 			await().untilAsserted(() -> assertThat(messages, is(Arrays.asList(relativePosition))));
-		}), containsString(exceptionText));
+		}), allOf(containsString(exceptionText1), containsString(exceptionText2)));
 	}
 
 	private Consumer<Message> aConsumerThatThrows(Supplier<RuntimeException> supplier) {
