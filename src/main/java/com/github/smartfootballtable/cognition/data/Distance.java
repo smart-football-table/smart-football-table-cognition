@@ -15,6 +15,12 @@ public class Distance {
 	}
 
 	public double value(DistanceUnit target) {
+		if (target == distanceUnit) {
+			// this is an (not really needed optimization). Not really needed because
+			// DistanceUnit#convert will return the value without any conversion if
+			// target and source are same.
+			return value;
+		}
 		return target.convert(value, distanceUnit);
 	}
 
@@ -23,12 +29,6 @@ public class Distance {
 	}
 
 	public Distance add(Distance other) {
-		if (other.distanceUnit == distanceUnit) {
-			// this is an (not really needed optimization). Not really needed because
-			// Distance#value will directly return the value without any conversion if
-			// Distance is in the passed DistanceUnit.
-			return new Distance(value + other.value, distanceUnit);
-		}
 		return new Distance(value + other.value(distanceUnit), distanceUnit);
 	}
 
