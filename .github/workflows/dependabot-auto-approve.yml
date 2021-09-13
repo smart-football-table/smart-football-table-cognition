@@ -19,8 +19,9 @@ jobs:
         id: wait-for-build
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
+          timeoutSeconds: 1200
           checkName: build
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Approve a PR
         if: steps.wait-for-build.outputs.conclusion == 'success'
         run: gh pr review --approve "$PR_URL"
