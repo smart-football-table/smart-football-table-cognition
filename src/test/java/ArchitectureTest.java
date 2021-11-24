@@ -9,34 +9,32 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
-@AnalyzeClasses(packages = "com.github.smartfootballtable.cognition", importOptions = DoNotIncludeTests.class)
+@AnalyzeClasses(packages = ArchitectureTest.COGNITION_BASE, importOptions = DoNotIncludeTests.class)
 class ArchitectureTest {
 
+	protected static final String COGNITION_BASE = "com.github.smartfootballtable.cognition";
+
 	@ArchTest
-	ArchRule noCycle = slices().matching("com.github.smartfootballtable.cognition.(*)..").should().beFreeOfCycles();
+	ArchRule packagesFreeOfCycles = slices().matching(COGNITION_BASE + ".(*)..").should().beFreeOfCycles();
 
 	@ArchTest
 	ArchRule detectorsMustNotDependOnEachOther = noClasses() //
-			.that().resideInAnyPackage(detectorPackage()) //
+			.that().resideInAPackage(packageOf(Detector.class)) //
 			.and().areTopLevelClasses() //
-			.should().onlyBeAccessed().byClassesThat().resideInAPackage(detectorPackage()) //
+			.should().onlyBeAccessed().byClassesThat().resideInAPackage(packageOf(Detector.class)) //
 	;
 
 	@ArchTest
 	ArchRule detectorsShouldBeNamedAccordinglyAndResideInTheInterfacesPackage = classes() //
 			.that().implement(Detector.class) //
 			.should().haveSimpleNameEndingWith("Detector") //
-			.andShould().resideInAPackage(Detector.class.getPackage().getName()) //
+			.andShould().resideInAPackage(packageOf(Detector.class)) //
 	;
 
 	@ArchTest
 	ArchRule classesInMainShouldNotReferedByOtherPackages = classes() //
 			.that().resideInAnyPackage(packageOf(Main.class)) //
 			.should().onlyBeAccessed().byClassesThat().resideInAPackage(packageOf(Main.class));
-
-	String detectorPackage() {
-		return "com.github.smartfootballtable.cognition.detector";
-	};
 
 	String packageOf(Class<?> clazz) {
 		return clazz.getPackage().getName();
