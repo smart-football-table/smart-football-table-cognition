@@ -49,8 +49,10 @@ public class ContractVerificationTest {
 
 	@State("a goal was shot")
 	public void aGoalWasShot() {
-		int oldScore = anyScore();
-		cognition.messages().scoreChanged(anyTeam(), oldScore, oldScore + 1);
+		int newScore = anyScore();
+		// we do NOT guarantee that new score is always exactly 1 greater than old score
+		int oldScore = newScore - 2;
+		cognition.messages().scoreChanged(anyTeam(), oldScore, newScore);
 	}
 
 	@State("a team fouled")
@@ -70,7 +72,8 @@ public class ContractVerificationTest {
 
 	@State("a game ends draw")
 	public void aGameEndsDraw() {
-		cognition.messages().gameDraw(0, 1, anyTeam(), 2, 3, 4, 5, 6);
+		// we do NOT guarantee any order
+		cognition.messages().gameDraw(0, 1, anyTeam(), 2, 6, 5, 4, 3);
 	}
 
 	@PactVerifyProvider("the scoring team gets published")
@@ -115,7 +118,7 @@ public class ContractVerificationTest {
 	}
 
 	private int anyScore() {
-		return 1;
+		return MAX_VALUE;
 	}
 
 	private String toJson(Message message) {
