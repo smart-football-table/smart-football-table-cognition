@@ -8,14 +8,14 @@ import static com.github.smartfootballtable.cognition.MessageMother.TOPIC_BALL_P
 import static com.github.smartfootballtable.cognition.MessageMother.relativePosition;
 import static com.github.smartfootballtable.cognition.MessageMother.scoreOfTeam;
 import static com.github.smartfootballtable.cognition.MessageMother.teamScored;
-import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.ball;
-import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.frontOfLeftGoal;
-import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.frontOfRightGoal;
-import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.kickoff;
-import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.lowerRightCorner;
-import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.offTable;
-import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.pos;
-import static com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder.upperLeftCorner;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.PositionMessageBuilder.ball;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.PositionMessageBuilder.BallPosBuilder.frontOfLeftGoal;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.PositionMessageBuilder.BallPosBuilder.frontOfRightGoal;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.PositionMessageBuilder.BallPosBuilder.kickoff;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.PositionMessageBuilder.BallPosBuilder.lowerRightCorner;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.PositionMessageBuilder.BallPosBuilder.offTable;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.PositionMessageBuilder.BallPosBuilder.pos;
+import static com.github.smartfootballtable.cognition.SFTCognitionTest.PositionMessageBuilder.BallPosBuilder.upperLeftCorner;
 import static com.github.smartfootballtable.cognition.Topic.TEAM_SCORE;
 import static com.github.smartfootballtable.cognition.Topic.isTopic;
 import static com.github.smartfootballtable.cognition.data.Message.message;
@@ -47,8 +47,8 @@ import java.util.stream.Stream;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
-import com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.BallPosBuilder;
-import com.github.smartfootballtable.cognition.SFTCognitionTest.StdInBuilder.TimestampedMessage;
+import com.github.smartfootballtable.cognition.SFTCognitionTest.PositionMessageBuilder.BallPosBuilder;
+import com.github.smartfootballtable.cognition.SFTCognitionTest.PositionMessageBuilder.TimestampedMessage;
 import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 import com.github.smartfootballtable.cognition.data.position.RelativePosition;
@@ -57,7 +57,7 @@ import com.github.smartfootballtable.cognition.detector.GoalDetector;
 
 class SFTCognitionTest {
 
-	public static class StdInBuilder {
+	public static class PositionMessageBuilder {
 
 		public static class BallPosBuilder {
 
@@ -143,49 +143,49 @@ class SFTCognitionTest {
 		private long timestamp;
 		private final List<TimestampedMessage> messages = new ArrayList<>();
 
-		private StdInBuilder(long timestamp) {
+		private PositionMessageBuilder(long timestamp) {
 			this.timestamp = timestamp;
 		}
 
-		public static StdInBuilder ball() {
+		public static PositionMessageBuilder ball() {
 			return ball(anyTimestamp());
 		}
 
-		public static StdInBuilder ball(long timestamp) {
+		public static PositionMessageBuilder ball(long timestamp) {
 			return messagesStartingAt(timestamp);
 		}
 
-		private static StdInBuilder messagesStartingAt(long timestamp) {
-			return new StdInBuilder(timestamp);
+		private static PositionMessageBuilder messagesStartingAt(long timestamp) {
+			return new PositionMessageBuilder(timestamp);
 		}
 
 		private static long anyTimestamp() {
 			return 1234;
 		}
 
-		private StdInBuilder then() {
+		private PositionMessageBuilder then() {
 			return this;
 		}
 
-		private StdInBuilder then(BallPosBuilder ballPosBuilder) {
+		private PositionMessageBuilder then(BallPosBuilder ballPosBuilder) {
 			return at(ballPosBuilder);
 		}
 
-		private StdInBuilder at(BallPosBuilder ballPosBuilder) {
+		private PositionMessageBuilder at(BallPosBuilder ballPosBuilder) {
 			messages.add(makeMessage(ballPosBuilder.x, ballPosBuilder.y));
 			return this;
 		}
 
-		private StdInBuilder thenAfterMillis(long duration) {
+		private PositionMessageBuilder thenAfterMillis(long duration) {
 			return thenAfter(duration, MILLISECONDS);
 		}
 
-		private StdInBuilder thenAfter(long duration, TimeUnit timeUnit) {
+		private PositionMessageBuilder thenAfter(long duration, TimeUnit timeUnit) {
 			timestamp += timeUnit.toMillis(duration);
 			return this;
 		}
 
-		private StdInBuilder invalidData() {
+		private PositionMessageBuilder invalidData() {
 			messages.add(makeMessage("A", "B"));
 			return this;
 		}
@@ -194,27 +194,27 @@ class SFTCognitionTest {
 			return new TimestampedMessage(timestamp, relativePosition(timestamp, x, y));
 		}
 
-		private StdInBuilder prepareForLeftGoal() {
-			return prepateForGoal().at(frontOfLeftGoal());
+		private PositionMessageBuilder prepareForLeftGoal() {
+			return prepareForGoal().at(frontOfLeftGoal());
 		}
 
-		private StdInBuilder prepareForRightGoal() {
-			return prepateForGoal().at(frontOfRightGoal());
+		private PositionMessageBuilder prepareForRightGoal() {
+			return prepareForGoal().at(frontOfRightGoal());
 		}
 
-		private StdInBuilder prepateForGoal() {
+		private PositionMessageBuilder prepareForGoal() {
 			return at(kickoff()).thenAfter(100, MILLISECONDS);
 		}
 
-		private StdInBuilder score() {
+		private PositionMessageBuilder score() {
 			return offTableFor(2, SECONDS);
 		}
 
-		private StdInBuilder offTableFor(int duration, TimeUnit timeUnit) {
+		private PositionMessageBuilder offTableFor(int duration, TimeUnit timeUnit) {
 			return at(offTable()).thenAfter(duration, timeUnit).then(offTable());
 		}
 
-		public StdInBuilder thenCall(Consumer<Consumer<RelativePosition>> setter, Consumer<RelativePosition> c) {
+		public PositionMessageBuilder thenCall(Consumer<Consumer<RelativePosition>> setter, Consumer<RelativePosition> c) {
 			setter.accept(new Consumer<RelativePosition>() {
 				long timestampNow = timestamp;
 				private boolean processed;
@@ -734,7 +734,7 @@ class SFTCognitionTest {
 		givenATableOfSize(123, 45, CENTIMETER);
 	}
 
-	private void givenInputToProcessIs(StdInBuilder builder) {
+	private void givenInputToProcessIs(PositionMessageBuilder builder) {
 		givenInputToProcessIs(builder.build());
 	}
 
