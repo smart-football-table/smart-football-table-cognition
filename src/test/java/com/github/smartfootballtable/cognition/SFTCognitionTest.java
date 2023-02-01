@@ -414,7 +414,7 @@ class SFTCognitionTest {
 	}
 
 	@Test
-	void canRevertGoals() throws IOException {
+	void canRevokeGoals() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
 		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(anyCorner()));
@@ -424,7 +424,7 @@ class SFTCognitionTest {
 	}
 
 	@Test
-	void alsoRevertsIfBallIsDetectedSomewhereElseAfterGoalAndThenInTheCorner() throws IOException {
+	void alsoRevokesIfBallIsDetectedSomewhereElseAfterGoalAndThenInTheCorner() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
 		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(pos(0.0, 0.5)).then(anyCorner()));
@@ -434,7 +434,7 @@ class SFTCognitionTest {
 	}
 
 	@Test
-	void afterRevertedGoalHappensOnOtherSide() throws IOException {
+	void afterRevokingAnotherGoalIsShotOnOppositeSide() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
 		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(anyCorner()).then().prepareForRightGoal()
