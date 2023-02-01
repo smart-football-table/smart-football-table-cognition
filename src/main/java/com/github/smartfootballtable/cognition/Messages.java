@@ -15,6 +15,7 @@ import java.text.NumberFormat;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 import com.github.smartfootballtable.cognition.data.Distance;
@@ -54,6 +55,8 @@ public class Messages {
 
 	private static final String BALL_POSITION_REL = "ball/position/rel";
 	private static final String BALL_POSITION_ABS = "ball/position/abs";
+
+	private static final Pattern payloadPattern = Pattern.compile("\\,");
 
 	private final Consumer<Message> consumer;
 	private final DistanceUnit distanceUnit;
@@ -161,7 +164,7 @@ public class Messages {
 	}
 
 	public RelativePosition parsePosition(String payload) {
-		String[] values = payload.split("\\,");
+		String[] values = payloadPattern.split(payload);
 		if (values.length == 3) {
 			Long timestamp = toLong(values[0]);
 			Double x = toDouble(values[1]);
