@@ -174,11 +174,15 @@ public class Messages {
 	}
 
 	public void scoreChanged(int teamid, int oldScore, int newScore) {
-		if (newScore > oldScore) {
+		if (!goalWasRevoked(oldScore, newScore)) {
 			teamScored(teamid);
 		}
 		publishTeamScore(teamid, newScore);
 		teamsEverScored.add(teamid);
+	}
+
+	private static boolean goalWasRevoked(int oldScore, int newScore) {
+		return newScore < oldScore;
 	}
 
 	private static Long toLong(String val) {
