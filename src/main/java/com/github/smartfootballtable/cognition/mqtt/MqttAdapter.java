@@ -2,6 +2,7 @@ package com.github.smartfootballtable.cognition.mqtt;
 
 import static com.github.smartfootballtable.cognition.data.Message.message;
 import static com.github.smartfootballtable.cognition.util.Sleep.sleep;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -90,7 +91,7 @@ public class MqttAdapter implements Consumer<Message>, MessageProvider, Closeabl
 
 			@Override
 			public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
-				Message message = message(topic, new String(mqttMessage.getPayload()));
+				Message message = message(topic, new String(mqttMessage.getPayload(), UTF_8));
 				consumer.accept(message);
 			}
 
