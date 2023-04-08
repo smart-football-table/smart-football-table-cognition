@@ -149,7 +149,6 @@
 					<includes>
 						<include>**/Test*.java</include>
 						<include>**/*Test.java</include>
-						<include>**/*IT.java</include>
 						<include>**/*Examples.java</include>
 					</includes>
 					<groups>!in-progress</groups>
