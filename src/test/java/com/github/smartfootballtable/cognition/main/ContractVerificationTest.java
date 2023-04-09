@@ -18,20 +18,20 @@ import com.github.smartfootballtable.cognition.data.Message;
 import com.github.smartfootballtable.cognition.data.Table;
 
 import au.com.dius.pact.provider.PactVerifyProvider;
-import au.com.dius.pact.provider.junit.Provider;
-import au.com.dius.pact.provider.junit.State;
-import au.com.dius.pact.provider.junit.loader.PactFolder;
-import au.com.dius.pact.provider.junit.target.TestTarget;
-import au.com.dius.pact.provider.junit5.AmpqTestTarget;
+import au.com.dius.pact.provider.junit5.MessageTestTarget;
 import au.com.dius.pact.provider.junit5.PactVerificationContext;
 import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvider;
+import au.com.dius.pact.provider.junitsupport.Provider;
+import au.com.dius.pact.provider.junitsupport.State;
+import au.com.dius.pact.provider.junitsupport.loader.PactFolder;
+import au.com.dius.pact.provider.junitsupport.target.TestTarget;
 
 @Provider("cognition")
 @PactFolder("pacts")
 public class ContractVerificationTest {
 
 	@TestTarget
-	public final AmpqTestTarget target = new AmpqTestTarget(asList("com.github.smartfootballtable.cognition"));
+	public final MessageTestTarget target = new MessageTestTarget(asList("com.github.smartfootballtable.cognition"));
 
 	private final List<Message> sendMessages = new ArrayList<>();
 	private final SFTCognition cognition = new SFTCognition(anyTable(), sendMessages::add);

@@ -10,9 +10,8 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<junit.jupiter.version>5.9.2</junit.jupiter.version>
+		<pact.version>4.1.7</pact.version>
 		<image>docker.io/smart-football-table/${project.artifactId}:latest</image>
-		<sonar.organization>smart-football-table</sonar.organization>
-		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>
 
 	<profiles>
@@ -100,15 +99,15 @@
 		</dependency>
 		<!-- used for contract testing (PACT) -->
 		<dependency>
-			<groupId>au.com.dius</groupId>
-			<artifactId>pact-jvm-consumer-junit5</artifactId>
-			<version>4.0.10</version>
+			<groupId>au.com.dius.pact.consumer</groupId>
+			<artifactId>junit5</artifactId>
+			<version>${pact.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>au.com.dius</groupId>
-			<artifactId>pact-jvm-provider-junit5</artifactId>
-			<version>4.0.10</version>
+			<groupId>au.com.dius.pact.provider</groupId>
+			<artifactId>junit5</artifactId>
+			<version>${pact.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
