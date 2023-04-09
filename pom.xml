@@ -9,7 +9,7 @@
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<junit.jupiter.version>5.9.2</junit.jupiter.version>
+		<junit.version>5.9.2</junit.version>
 		<pact.version>4.1.7</pact.version>
 		<image>docker.io/smart-football-table/${project.artifactId}:latest</image>
 	</properties>
@@ -38,13 +38,12 @@
 		</profile>
 	</profiles>
 
-
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
 				<groupId>org.junit</groupId>
 				<artifactId>junit-bom</artifactId>
-				<version>${junit.jupiter.version}</version>
+				<version>${junit.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
