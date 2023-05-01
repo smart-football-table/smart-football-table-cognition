@@ -36,6 +36,31 @@
 				</os>
 			</activation>
 		</profile>
+		<profile>
+			<id>open-java-base-and-java-util</id>
+			<!-- needed on JDK17+ due to restrictions in reflections api but can be enabled on JDK9+-->
+			<activation>
+				<jdk>[9,)</jdk>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<argLine>--add-opens=java.base/java.util=ALL-UNNAMED</argLine>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<argLine>--add-opens=java.base/java.util=ALL-UNNAMED</argLine>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
 
 	<dependencyManagement>
