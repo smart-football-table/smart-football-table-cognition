@@ -144,7 +144,6 @@
 				<version>3.0.0</version>
 				<configuration>
 					<useSystemClassLoader>false</useSystemClassLoader>
-					<argLine>--add-opens=java.base/java.util=ALL-UNNAMED</argLine>
 					<includes>
 						<include>**/Test*.java</include>
 						<include>**/*Test.java</include>
@@ -159,9 +158,6 @@
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>3.0.0</version>
-				<configuration>
-					<argLine>--add-opens=java.base/java.util=ALL-UNNAMED</argLine>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>
