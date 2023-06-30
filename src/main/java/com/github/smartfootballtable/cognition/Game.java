@@ -1,12 +1,12 @@
 package com.github.smartfootballtable.cognition;
 
 import static com.github.smartfootballtable.cognition.detector.GoalDetector.onGoal;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +27,7 @@ public abstract class Game {
 
 		private enum ScoreChange {
 			SCORED(+1), REVERTED(-1);
+
 			private final int changeBy;
 
 			private ScoreChange(int changeBy) {
@@ -105,11 +106,11 @@ public abstract class Game {
 	public abstract Game reset();
 
 	public static Game newGame(Detector... detectors) {
-		return newGame(Arrays.asList(detectors));
+		return newGame(asList(detectors));
 	}
 
 	public static Game newGame(List<Detector> detectors) {
-		return new GameoverGame(detectors, new GoalDetector.Config(), Collections.emptyList());
+		return new GameoverGame(detectors, new GoalDetector.Config(), emptyList());
 	}
 
 	private static class InGameGame extends Game {
@@ -224,8 +225,11 @@ public abstract class Game {
 
 		@Override
 		public Game update(AbsolutePosition pos) {
-			return new InGameGame(detectors.stream().map(Detector::newInstance).collect(toList()), goalDetectorConfig,
-					scoreTrackerListeners).update(pos);
+			return new InGameGame(newDetectors(), goalDetectorConfig, scoreTrackerListeners).update(pos);
+		}
+
+		private List<Detector> newDetectors() {
+			return detectors.stream().map(Detector::newInstance).collect(toList());
 		}
 
 		@Override

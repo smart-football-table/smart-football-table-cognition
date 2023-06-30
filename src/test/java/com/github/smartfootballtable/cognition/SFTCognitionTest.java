@@ -30,6 +30,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
+import static java.util.stream.Stream.iterate;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -214,7 +216,8 @@ class SFTCognitionTest {
 			return at(offTable()).thenAfter(duration, timeUnit).then(offTable());
 		}
 
-		public PositionMessageBuilder thenCall(Consumer<Consumer<RelativePosition>> setter, Consumer<RelativePosition> c) {
+		private PositionMessageBuilder thenCall(Consumer<Consumer<RelativePosition>> setter,
+				Consumer<RelativePosition> c) {
 			setter.accept(new Consumer<RelativePosition>() {
 				long timestampNow = timestamp;
 				private boolean processed;
@@ -234,6 +237,10 @@ class SFTCognitionTest {
 			return this;
 		}
 
+		private PositionMessageBuilder times(int times, UnaryOperator<PositionMessageBuilder> op) {
+			return iterate(this, op::apply).limit(times + 1).reduce((__, b) -> b).orElse(this);
+		}
+
 		private List<TimestampedMessage> build() {
 			return new ArrayList<>(messages);
 		}
@@ -247,58 +254,51 @@ class SFTCognitionTest {
 	};
 
 	private SFTCognition sut;
-	private final List<TimestampedMessage> inputMessages = new ArrayList<>();
 
 	@Test
 	void relativeValuesGetsConvertedToAbsolutesAtKickoff() throws IOException {
 		givenATableOfSize(100, 80, CENTIMETER);
-		givenInputToProcessIs(ball().at(kickoff()));
-		whenInputWasProcessed();
+		whenProcessed(ball().at(kickoff()));
 		thenTheAbsolutePositionOnTheTableIsPublished("50.00", "40.00");
 	}
 
 	@Test
 	void relativeValuesGetsConvertedToAbsolutes() throws IOException {
 		givenATableOfSize(100, 80, CENTIMETER);
-		givenInputToProcessIs(ball().at(pos(0.9, 0.1)));
-		whenInputWasProcessed();
+		whenProcessed(ball().at(pos(0.9, 0.1)));
 		thenTheAbsolutePositionOnTheTableIsPublished("90.00", "8.00");
 	}
 
 	@Test
 	void malformedMessageIsRead() throws IOException {
 		givenATableOfAnySize();
-		givenInputToProcessIs(ball().invalidData());
-		whenInputWasProcessed();
+		whenProcessed(ball().invalidData());
 		thenNoMessageIsSent();
 	}
 
 	@Test
 	void onReadingTheNoPositionMessage_noMessageIsSent() throws IOException {
 		givenATableOfAnySize();
-		givenInputToProcessIs(ball().at(offTable()));
-		whenInputWasProcessed();
+		whenProcessed(ball().at(offTable()));
 		thenNoMessageIsSent();
 	}
 
 	@Test
 	void whenTwoPositionsAreRead_VelocityGetsPublished_MetricTable() throws IOException {
 		givenATableOfSize(100, 80, CENTIMETER);
-		givenInputToProcessIs(ball().at(upperLeftCorner()).thenAfter(1, SECONDS).at(lowerRightCorner()));
-		whenInputWasProcessed();
-		assertOneMessageWithPayload(messagesWithTopic("ball/distance/cm"), is("128.06"));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/ms"), is("1.28"));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/kmh"), is("4.61"));
+		whenProcessed(ball().at(upperLeftCorner()).thenAfter(1, SECONDS).at(lowerRightCorner()));
+		assertOneMessageWithPayload(withTopic("ball/distance/cm"), is("128.06"));
+		assertOneMessageWithPayload(withTopic("ball/velocity/ms"), is("1.28"));
+		assertOneMessageWithPayload(withTopic("ball/velocity/kmh"), is("4.61"));
 	}
 
 	@Test
 	void whenTwoPositionsAreRead_VelocityGetsPublished_ImperialTable() throws IOException {
 		givenATableOfSize(100, 80, INCHES);
-		givenInputToProcessIs(ball().at(upperLeftCorner()).thenAfter(1, SECONDS).at(lowerRightCorner()));
-		whenInputWasProcessed();
-		assertOneMessageWithPayload(messagesWithTopic("ball/distance/inch"), is("128.06"));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/ips"), is("128.06"));
-		assertOneMessageWithPayload(messagesWithTopic("ball/velocity/mph"), is("7.28"));
+		whenProcessed(ball().at(upperLeftCorner()).thenAfter(1, SECONDS).at(lowerRightCorner()));
+		assertOneMessageWithPayload(withTopic("ball/distance/inch"), is("128.06"));
+		assertOneMessageWithPayload(withTopic("ball/velocity/ips"), is("128.06"));
+		assertOneMessageWithPayload(withTopic("ball/velocity/mph"), is("7.28"));
 	}
 
 	@Test
@@ -317,21 +317,19 @@ class SFTCognitionTest {
 
 	private void makeDiamondMoveOnTableIn() throws IOException {
 		BallPosBuilder base = kickoff();
-		givenInputToProcessIs(ball() //
+		whenProcessed(ball() //
 				.at(base.left(0.1)) //
 				.at(base.up(0.1)) //
 				.at(base.right(0.1)) //
 				.at(base.down(0.1)) //
 				.at(base.left(0.1)));
-		whenInputWasProcessed();
 	}
 
 	@Test
 	void canDetectGoalOnLeftHandSide() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball().prepareForLeftGoal().then().score());
-		whenInputWasProcessed();
+		whenProcessed(ball().prepareForLeftGoal().then().score());
 		thenGoalForTeamIsPublished(0);
 		thenPayloadsWithTopicAre(scoreOfTeam(0), "1");
 	}
@@ -340,8 +338,7 @@ class SFTCognitionTest {
 	void canDetectGoalOnRightHandSide() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball().prepareForRightGoal().then().score());
-		whenInputWasProcessed();
+		whenProcessed(ball().prepareForRightGoal().then().score());
 		thenGoalForTeamIsPublished(1);
 		thenPayloadsWithTopicAre(scoreOfTeam(1), "1");
 	}
@@ -350,8 +347,7 @@ class SFTCognitionTest {
 	void noGoalIfBallWasNotInFrontOfGoalRightHandSide() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball().prepareForRightGoal().then().at(frontOfRightGoal().left(0.01)).score());
-		whenInputWasProcessed();
+		whenProcessed(ball().prepareForRightGoal().then().at(frontOfRightGoal().left(0.01)).score());
 		thenNoMessageWithTopicIsSent(teamScored());
 	}
 
@@ -359,20 +355,14 @@ class SFTCognitionTest {
 	void noGoalIfBallWasNotInFrontOfGoalLeftHandSide() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball().prepareForLeftGoal().then().at(frontOfLeftGoal().right(0.01)).then().score());
-		whenInputWasProcessed();
+		whenProcessed(ball().prepareForLeftGoal().then().at(frontOfLeftGoal().right(0.01)).then().score());
 		thenNoMessageWithTopicIsSent(teamScored());
 	}
 
 	@Test
 	void leftHandSideScoresThreeTimes() throws IOException {
 		givenATableOfAnySize();
-		givenInputToProcessIs(ball() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score() //
-		);
-		whenInputWasProcessed();
+		whenProcessed(ball().times(3, b -> b.prepareForLeftGoal().then().score()));
 		thenPayloadsWithTopicAre(teamScored(), times("0", 3));
 		thenPayloadsWithTopicAre(scoreOfTeam(0), "1", "2", "3");
 	}
@@ -381,8 +371,7 @@ class SFTCognitionTest {
 	void noGoalsIfBallWasNotDetectedAtMiddleLine() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball().at(frontOfLeftGoal()).then().score());
-		whenInputWasProcessed();
+		whenProcessed(ball().at(frontOfLeftGoal()).then().score());
 		thenNoMessageWithTopicIsSent(teamScored());
 	}
 
@@ -393,13 +382,12 @@ class SFTCognitionTest {
 		long timeout = SECONDS.toMillis(2);
 		givenTimeWithoutBallTilGoal(timeout, MILLISECONDS);
 		long oneMsBeforeTimeout = timeout - 1;
-		givenInputToProcessIs(ball() //
+		whenProcessed(ball() //
 				.prepareForLeftGoal().then(offTable()).thenAfterMillis(oneMsBeforeTimeout).then(offTable()).then() //
 				.prepareForRightGoal().then(offTable()).thenAfterMillis(oneMsBeforeTimeout).then(offTable()).then() //
 				.prepareForLeftGoal().then(offTable()).thenAfterMillis(oneMsBeforeTimeout).then(kickoff()).then() //
 				.prepareForRightGoal().then(offTable()).thenAfterMillis(oneMsBeforeTimeout).then(kickoff()) //
 		);
-		whenInputWasProcessed();
 		thenNoMessageWithTopicIsSent(teamScored());
 	}
 
@@ -408,8 +396,7 @@ class SFTCognitionTest {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
 		givenTimeWithoutBallTilGoal(0, MILLISECONDS);
-		givenInputToProcessIs(ball().prepareForLeftGoal().then().score());
-		whenInputWasProcessed();
+		whenProcessed(ball().prepareForLeftGoal().then().score());
 		thenGoalForTeamIsPublished(0);
 	}
 
@@ -417,8 +404,7 @@ class SFTCognitionTest {
 	void canRevokeGoals() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(anyCorner()));
-		whenInputWasProcessed();
+		whenProcessed(ball().prepareForLeftGoal().then().score().then(anyCorner()));
 		thenPayloadsWithTopicAre(scoreOfTeam(0), "1", "0");
 		thenPayloadsWithTopicAre(teamScored(), "0");
 	}
@@ -427,8 +413,7 @@ class SFTCognitionTest {
 	void alsoRevokesIfBallIsDetectedSomewhereElseAfterGoalAndThenInTheCorner() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(pos(0.0, 0.5)).then(anyCorner()));
-		whenInputWasProcessed();
+		whenProcessed(ball().prepareForLeftGoal().then().score().then(pos(0.0, 0.5)).then(anyCorner()));
 		thenPayloadsWithTopicAre(scoreOfTeam(0), "1", "0");
 		thenPayloadsWithTopicAre(teamScored(), "0");
 	}
@@ -437,9 +422,8 @@ class SFTCognitionTest {
 	void afterRevokingAnotherGoalIsShotOnOppositeSide() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball().prepareForLeftGoal().then().score().then(anyCorner()).then().prepareForRightGoal()
-				.then().score());
-		whenInputWasProcessed();
+		whenProcessed(ball().prepareForLeftGoal().then().score().then(anyCorner()).then().prepareForRightGoal().then()
+				.score());
 		thenPayloadsWithTopicAre(scoreOfTeam(1), "1");
 	}
 
@@ -447,15 +431,7 @@ class SFTCognitionTest {
 	void doesSendWinner() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score() //
-		);
-		whenInputWasProcessed();
+		whenProcessed(ball().times(6, b -> b.prepareForLeftGoal().then().score()));
 		assertThat(lastMessageWithTopic(scoreOfTeam(0)).getPayload(), is("6"));
 		thenWinnerAre(0);
 	}
@@ -464,19 +440,8 @@ class SFTCognitionTest {
 	void doesSendDrawWinners() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball() //
-				.prepareForLeftGoal().score().then() //
-				.prepareForRightGoal().then().score().then() //
-				.prepareForLeftGoal().score().then() //
-				.prepareForRightGoal().score().then() //
-				.prepareForLeftGoal().score().then() //
-				.prepareForRightGoal().score().then() //
-				.prepareForLeftGoal().score().then() //
-				.prepareForRightGoal().score().then() //
-				.prepareForLeftGoal().score().then() //
-				.prepareForRightGoal().score() //
-		);
-		whenInputWasProcessed();
+		whenProcessed(ball().times(5,
+				b -> b.prepareForLeftGoal().then().score().then().prepareForRightGoal().then().score()));
 		assertThat(lastMessageWithTopic(scoreOfTeam(0)).getPayload(), is("5"));
 		assertThat(lastMessageWithTopic(scoreOfTeam(1)).getPayload(), is("5"));
 		thenWinnerAre(0, 1);
@@ -486,27 +451,16 @@ class SFTCognitionTest {
 	void newGameGetsStarted() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score().then() //
-				.prepareForLeftGoal().then().score() //
-		);
-		whenInputWasProcessed();
+		whenProcessed(ball().times(6, b -> b.prepareForLeftGoal().then().score()));
 		assertThat(lastMessageWithTopic(scoreOfTeam(0)).getPayload(), is("6"));
 		thenNoMessageWithTopicIsSent(scoreOfTeam(1));
 
 		collectedMessages.clear();
 
-		givenInputToProcessIs(ball() //
-				.prepareForRightGoal().then().score().then() //
-				.prepareForRightGoal().then().score().then() //
-				.prepareForRightGoal().then().score().then() //
-				.prepareForLeftGoal().then().score().then() //
+		whenProcessed(ball() //
+				.times(3, b -> b.prepareForRightGoal().then().score()) //
+				.prepareForLeftGoal().then().score() //
 		);
-		whenInputWasProcessed();
 		assertThat(lastMessageWithTopic(scoreOfTeam(0)).getPayload(), is("1"));
 		assertThat(lastMessageWithTopic(scoreOfTeam(1)).getPayload(), is("3"));
 	}
@@ -514,8 +468,7 @@ class SFTCognitionTest {
 	@Test
 	void doesSendGameStartAndScoresWhenGameStarts() throws IOException {
 		givenATableOfAnySize();
-		givenInputToProcessIs(ball().at(kickoff()).at(kickoff()));
-		whenInputWasProcessed();
+		whenProcessed(ball().at(kickoff()).at(kickoff()));
 		thenNoMessageIsSent(isTopic(TEAM_SCORE));
 	}
 
@@ -523,33 +476,30 @@ class SFTCognitionTest {
 	void doesSendFoul() throws IOException {
 		givenATableOfAnySize();
 		BallPosBuilder middlefieldRow = kickoff().left(0.1);
-		givenInputToProcessIs(ball().at(middlefieldRow) //
+		whenProcessed(ball().at(middlefieldRow) //
 				.thenAfter(10, SECONDS).at(middlefieldRow.up(0.49)) //
 				.thenAfter(5, SECONDS).at(middlefieldRow.down(0.49)) //
 		);
-		whenInputWasProcessed();
-		assertOneMessageWithPayload(messagesWithTopic(GAME_FOUL), is(""));
+		assertOneMessageWithPayload(withTopic(GAME_FOUL), is(""));
 	}
 
 	@Test
 	void doesNotSendFoul() throws IOException {
 		givenATableOfAnySize();
 		BallPosBuilder middlefieldRow = kickoff().left(0.1);
-		givenInputToProcessIs(ball().at(middlefieldRow) //
+		whenProcessed(ball().at(middlefieldRow) //
 				.thenAfter(10, SECONDS).at(middlefieldRow.up(0.49)) //
 				.thenAfter(4, SECONDS).at(frontOfLeftGoal()) //
 				.thenAfter(1, SECONDS).at(middlefieldRow.down(0.49)) //
 		);
-		whenInputWasProcessed();
 		thenNoMessageWithTopicIsSent(GAME_FOUL);
 	}
 
 	@Test
 	void doesNotSendFoulWhenBallIsOffTable() throws IOException {
 		givenATableOfAnySize();
-		givenInputToProcessIs(ball().at(anyPos()) //
+		whenProcessed(ball().at(anyPos()) //
 				.offTableFor(15, SECONDS).offTableFor(1, SECONDS));
-		whenInputWasProcessed();
 		thenNoMessageWithTopicIsSent(GAME_FOUL);
 	}
 
@@ -557,38 +507,25 @@ class SFTCognitionTest {
 	void doesSendFoulOnlyOnceUntilFoulIsOver() throws IOException {
 		givenATableOfAnySize();
 		BallPosBuilder middlefieldRow = kickoff().left(0.1);
-		givenInputToProcessIs(ball().at(middlefieldRow.up(0.49)) //
+		whenProcessed(ball().at(middlefieldRow.up(0.49)) //
 				.thenAfter(15, SECONDS).at(middlefieldRow.down(0.49)) //
 				.thenAfter(100, MILLISECONDS).at(middlefieldRow.down(0.49)) //
 				.thenAfter(100, MILLISECONDS).at(middlefieldRow.down(0.49)) //
 				.thenAfter(100, MILLISECONDS).at(middlefieldRow.down(0.49)) //
 		);
-		whenInputWasProcessed();
-		assertOneMessageWithPayload(messagesWithTopic(GAME_FOUL), is(""));
+		assertOneMessageWithPayload(withTopic(GAME_FOUL), is(""));
 	}
 
 	@Test
 	void doesRestartAfterGameEnd() throws IOException {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
-		givenInputToProcessIs(ball() //
-				.prepareForLeftGoal().score().then() //
-				.prepareForRightGoal().score().then() //
-				.prepareForLeftGoal().score().then() //
-				.prepareForRightGoal().score().then() //
-				.prepareForLeftGoal().score().then() //
-				.prepareForRightGoal().score().then() //
-				.prepareForLeftGoal().score().then() //
-				.prepareForRightGoal().score().then() //
-				.prepareForLeftGoal().score().then() //
-				.prepareForRightGoal().score() //
-				//
-				.prepareForLeftGoal().score().then() //
-				.prepareForLeftGoal().score().then() //
-				.prepareForRightGoal().score().then() //
-				.prepareForRightGoal().score() //
+		whenProcessed(ball() //
+				.times(5, b -> b.prepareForLeftGoal().score().then().prepareForRightGoal().score())
+				// game get's restarted
+				.times(2, b -> b.prepareForLeftGoal().score()) //
+				.times(2, b -> b.prepareForRightGoal().score()) //
 		);
-		whenInputWasProcessed();
 
 		assertThat(collectedMessages(m -> !m.getTopic().startsWith("ball/")).collect(toList()), //
 				is(asList( //
@@ -630,56 +567,52 @@ class SFTCognitionTest {
 	@Test
 	void doesSendIdleOnWhenBallIsOffTableForOneMinuteOrMore() throws IOException {
 		givenATableOfAnySize();
-		givenInputToProcessIs(ball().at(kickoff()) //
+		whenProcessed(ball().at(kickoff()) //
 				.thenAfter(1, SECONDS).at(offTable()) //
 				.thenAfter(1, MINUTES).at(offTable()) //
 				.thenAfter(1, SECONDS).at(offTable()) //
 				.thenAfter(1, SECONDS).at(offTable()) //
 				.thenAfter(1, SECONDS).at(offTable()) //
 		);
-		whenInputWasProcessed();
 		thenPayloadsWithTopicAre(GAME_IDLE, "true");
 	}
 
 	@Test
 	void doesSendIdleOnWhenBallHasNoMovementForOneMinuteOrMore() throws IOException {
 		givenATableOfAnySize();
-		givenInputToProcessIs(ball().at(kickoff()) //
+		whenProcessed(ball().at(kickoff()) //
 				.thenAfter(1, SECONDS).at(kickoff()) //
 				.thenAfter(1, MINUTES).at(kickoff()) //
 				.thenAfter(1, SECONDS).at(kickoff()) //
 				.thenAfter(1, SECONDS).at(kickoff()) //
 				.thenAfter(1, SECONDS).at(kickoff()) //
 		);
-		whenInputWasProcessed();
 		thenPayloadsWithTopicAre(GAME_IDLE, "true");
 	}
 
 	@Test
 	void doesSendIdleOffWhenBallWasOffTableAndComesBack() throws IOException {
 		givenATableOfAnySize();
-		givenInputToProcessIs(ball().at(kickoff()) //
+		whenProcessed(ball().at(kickoff()) //
 				.thenAfter(1, SECONDS).at(offTable()) //
 				.thenAfter(1, MINUTES).at(offTable()) //
 				.thenAfter(1, SECONDS).at(kickoff()) //
 				.thenAfter(1, SECONDS).at(kickoff()) //
 				.thenAfter(1, SECONDS).at(kickoff()) //
 		);
-		whenInputWasProcessed();
 		thenPayloadsWithTopicAre(GAME_IDLE, "true", "false");
 	}
 
 	@Test
 	void doesSendIdleOffWhenBallIsMovedAgainAfterLongerPeriodOfTime() throws IOException {
 		givenATableOfAnySize();
-		givenInputToProcessIs(ball().at(kickoff()) //
+		whenProcessed(ball().at(kickoff()) //
 				.thenAfter(1, SECONDS).at(kickoff()) //
 				.thenAfter(1, MINUTES).at(kickoff()) //
 				.thenAfter(1, SECONDS).at(kickoff().down(0.01)) //
 				.thenAfter(1, SECONDS).at(kickoff()) //
 				.thenAfter(1, SECONDS).at(kickoff()) //
 		);
-		whenInputWasProcessed();
 		thenPayloadsWithTopicAre(GAME_IDLE, "true", "false");
 	}
 
@@ -688,14 +621,13 @@ class SFTCognitionTest {
 		givenATableOfAnySize();
 		givenFrontOfGoalPercentage(20);
 
-		givenInputToProcessIs(ball(MINUTES.toMillis(15)) //
+		whenProcessed(ball(MINUTES.toMillis(15)) //
 				.prepareForLeftGoal().score().thenAfter(5, SECONDS) //
 				.prepareForLeftGoal().score().thenCall(this::setInProgressConsumer, p -> resetGameAndClearMessages()) //
 				.prepareForRightGoal().score().thenAfter(5, SECONDS) //
 				.prepareForRightGoal().score() //
 		);
 
-		whenInputWasProcessed();
 		// when resetting the game the game/start message is sent immediately as
 		// well when the ball is then detected at the middle line
 		thenPayloadsWithTopicAre(GAME_START, times("", 2));
@@ -705,19 +637,17 @@ class SFTCognitionTest {
 
 	@Test
 	void whenDurationIsZeroNoVelocityGetsPublished() throws IOException {
-		givenATableOfSize(100, 80, CENTIMETER);
-		givenInputToProcessIs(ball().at(anyPos()).thenAfter(0, MILLISECONDS).at(anyPos()));
-		whenInputWasProcessed();
+		givenATableOfAnySize();
+		whenProcessed(ball().at(anyPos()).thenAfter(0, MILLISECONDS).at(anyPos()));
 		thenNoMessageIsSent(m -> m.getTopic().startsWith("ball/velocity/"));
 	}
 
 	@Test
 	void whenBallWasOffTableThereIsNoMovementBetweenPositionBeforeAndAfter() throws Exception {
-		givenATableOfSize(100, 80, CENTIMETER);
-		givenInputToProcessIs(ball().at(upperLeftCorner()) //
+		givenATableOfAnySize();
+		whenProcessed(ball().at(upperLeftCorner()) //
 				.then().offTableFor(1, MILLISECONDS) //
 				.then().at(lowerRightCorner()));
-		whenInputWasProcessed();
 		thenNoMessageIsSent(m -> m.getTopic().startsWith("ball/distance/"));
 		thenNoMessageIsSent(m -> m.getTopic().startsWith("ball/velocity/"));
 	}
@@ -734,12 +664,9 @@ class SFTCognitionTest {
 		givenATableOfSize(123, 45, CENTIMETER);
 	}
 
-	private void givenInputToProcessIs(PositionMessageBuilder builder) {
-		givenInputToProcessIs(builder.build());
-	}
-
-	private void givenInputToProcessIs(List<TimestampedMessage> messages) {
-		inputMessages.addAll(messages);
+	private void whenProcessed(PositionMessageBuilder builder) throws IOException {
+		builder.build().stream().map(this::toPosition).peek(inProgressConsumer)
+				.forEach(sut.withGoalConfig(goalDetectorConfig)::process);
 	}
 
 	private void givenFrontOfGoalPercentage(int frontOfGoalPercentage) {
@@ -748,12 +675,6 @@ class SFTCognitionTest {
 
 	private void givenTimeWithoutBallTilGoal(long duration, TimeUnit timeUnit) {
 		this.goalDetectorConfig.timeWithoutBallTilGoal(duration, timeUnit);
-	}
-
-	void whenInputWasProcessed() throws IOException {
-		sut = sut.withGoalConfig(goalDetectorConfig);
-		inputMessages.stream().map(this::toPosition).peek(inProgressConsumer).forEach(sut::process);
-		inputMessages.clear();
 	}
 
 	private RelativePosition toPosition(TimestampedMessage timestampedMessage) {
@@ -767,11 +688,11 @@ class SFTCognitionTest {
 	}
 
 	private void thenTheAbsolutePositionOnTheTableIsPublished(String x, String y) {
-		assertOneMessageWithPayload(messagesWithTopic(TOPIC_BALL_POSITION_ABS), is(makePayload(x, y)));
+		assertOneMessageWithPayload(withTopic(TOPIC_BALL_POSITION_ABS), is(makePayload(x, y)));
 	}
 
 	private void thenGoalForTeamIsPublished(int teamid) {
-		assertOneMessageWithPayload(messagesWithTopic(teamScored()), is(String.valueOf(teamid)));
+		assertOneMessageWithPayload(withTopic(teamScored()), is(String.valueOf(teamid)));
 	}
 
 	private void assertOneMessageWithPayload(Stream<Message> messagesWithTopic, Matcher<String> matcher) {
@@ -795,12 +716,11 @@ class SFTCognitionTest {
 	}
 
 	private Message lastMessageWithTopic(String topic) {
-		List<Message> messages = messagesWithTopic(topic).collect(toList());
-		return messages.isEmpty() ? null : messages.get(messages.size() - 1);
+		return withTopic(topic).reduce((first, second) -> second).orElse(null);
 	}
 
 	private void thenPayloadsWithTopicAre(String topic, String... payloads) {
-		assertThat(payloads(messagesWithTopic(topic)), is(asList(payloads)));
+		assertThat(payloads(withTopic(topic)), is(asList(payloads)));
 	}
 
 	private void thenWinnerAre(int... winners) {
@@ -823,7 +743,7 @@ class SFTCognitionTest {
 		return x + "," + y;
 	}
 
-	private Stream<Message> messagesWithTopic(String topic) {
+	private Stream<Message> withTopic(String topic) {
 		return collectedMessages.stream().filter(topic(topic));
 	}
 
