@@ -469,15 +469,14 @@ class DetectionExamples {
 
 			@Override
 			Arbitrary<List<OffsetPos>> build() {
-				return forDuration
-						.flatMap(minDuration -> base.collect(positions -> durationReached(positions, minDuration)));
+				return forDuration.flatMap(m -> base.collect(p -> durationReached(p, m)));
 			}
 
-			private boolean durationReached(List<OffsetPos> positions, long minDuration) {
+			private boolean durationReached(List<? extends OffsetPos> positions, long minDuration) {
 				return positions.size() > 1 && duration(positions.stream().limit(positions.size() - 1)) >= minDuration;
 			}
 
-			private long duration(Stream<OffsetPos> stream) {
+			private long duration(Stream<? extends OffsetPos> stream) {
 				return stream.mapToLong(OffsetPos::getOffset).sum();
 			}
 
