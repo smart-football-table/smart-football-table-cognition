@@ -75,7 +75,9 @@ import net.jqwik.api.Tuple;
 import net.jqwik.api.arbitraries.DoubleArbitrary;
 import net.jqwik.api.arbitraries.LongArbitrary;
 import net.jqwik.api.arbitraries.SizableArbitrary;
+import net.jqwik.api.statistics.Histogram;
 import net.jqwik.api.statistics.Statistics;
+import net.jqwik.api.statistics.StatisticsReport;
 
 @Tag("pbt")
 class DetectionExamples {
@@ -148,6 +150,7 @@ class DetectionExamples {
 	private static final String METRIC_TABLE = "metricTable";
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void ballOnTableNeverWillRaiseTeamScoreOrTeamsScoredEvents(
 			@ForAll("positionsOnTable") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -167,6 +170,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void leftGoalProducesTeamScoredMessage(@ForAll("goalSituationsLeft") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -175,6 +179,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void leftGoalsProducesTeamScoreMessage(@ForAll("goalSituationsLeft") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -183,6 +188,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void rightGoalProducesTeamScoredMessage(@ForAll("goalSituationsRight") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -191,6 +197,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void rightGoalProducesTeamScoreMessage(@ForAll("goalSituationsRight") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -199,6 +206,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void whenBallIsDetectedInAnyCornerAfterALeftHandGoalTheGoalGetsReverted(
 			@ForAll("leftGoalsToReverse") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -207,6 +215,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void whenBallIsDetectedInAnyCornerAfterARightHandGoalTheGoalGetsReverted(
 			@ForAll("rightGoalsToReverse") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -215,6 +224,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void whenBallDoesNotMoveForMoreThanOneMinuteTheGameGoesToIdleMode(
 			@ForAll("idleWhereBallMaybeGone") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -222,6 +232,7 @@ class DetectionExamples {
 	}
 
 	@Property(shrinking = ShrinkingMode.OFF, afterFailure = AfterFailureMode.SAMPLE_ONLY)
+	@StatisticsReport(format = Histogram.class)
 	// TODO could produce falls positives: random data could contain fouls
 	void noIdleWithoutFoul(@ForAll("idle") List<RelativePosition> positions, @ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -234,6 +245,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void allRelPositionAreBetween0And1(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -243,6 +255,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	boolean ballPositionAbsForEveryPosition(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -250,6 +263,7 @@ class DetectionExamples {
 	}
 
 	@Property(shrinking = ShrinkingMode.OFF, afterFailure = AfterFailureMode.SAMPLE_ONLY)
+	@StatisticsReport(format = Histogram.class)
 	void allAbsPositionAreBetween0AndTableSize(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -260,6 +274,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	boolean ballVelocityKmhForEveryPositionChange(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -267,6 +282,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void allBallPositionVelocitiesArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -275,6 +291,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	boolean ballVelocityMsForEveryPositionChange(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -282,6 +299,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void ballVelocityMsArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -290,6 +308,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void ballDistanceArePositive(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -298,6 +317,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void forEachOverallDistanceThereIsASingleDistance(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
@@ -307,6 +327,7 @@ class DetectionExamples {
 	}
 
 	@Property
+	@StatisticsReport(format = Histogram.class)
 	void overallDistanceIsSumOfSingleDistances(@ForAll("positionsOnTable") List<RelativePosition> positions,
 			@ForAll(METRIC_TABLE) Table table) {
 		statistics(positions);
