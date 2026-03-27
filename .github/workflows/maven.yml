@@ -53,4 +53,4 @@ jobs:
 #       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 #     run: mvn -B package jib:dockerBuild org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=smart-football-table_smart-football-table-cognition
     - name: Codecov
-      uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
+      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
